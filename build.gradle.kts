@@ -38,7 +38,11 @@ dependencies {
     // DB
 	runtimeOnly("com.mysql:mysql-connector-j")
 
-    // Test
+	// Lombok
+	compileOnly("org.projectlombok:lombok") // Lombok을 컴파일 타임에만 사용
+	annotationProcessor("org.projectlombok:lombok") // Lombok 어노테이션 처리
+
+	// Test
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.boot:spring-boot-testcontainers")
 	testImplementation("org.testcontainers:junit-jupiter")
