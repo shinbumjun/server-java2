@@ -1,0 +1,74 @@
+package kr.hhplus.be.server.domain.order;
+
+import jakarta.persistence.*;
+import kr.hhplus.be.server.interfaces.order.OrderRequest;
+import lombok.Getter;
+import lombok.Setter;
+import kr.hhplus.be.server.domain.product.Product;
+import kr.hhplus.be.server.domain.repository.ProductRepository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Entity
+@Table(name = "orders")
+@Getter
+@Setter
+public class Order {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private Long userId;
+    private Long userCouponId;
+    private boolean isCouponApplied;
+    private int totalAmount;
+    private String status;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
+    public Order(Long userId, Long userCouponId, boolean isCouponApplied, int totalAmount, String status, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.userId = userId;
+        this.userCouponId = userCouponId;
+        this.isCouponApplied = isCouponApplied;
+        this.totalAmount = totalAmount;
+        this.status = status;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    public void validateOrder(List<OrderRequest.OrderItem> orderItems, ProductRepository productRepository) {
+        // 재고 부족 체크
+        for (OrderRequest.OrderItem item : orderItems) {
+            Product product = productRepository.findById(item.getProductId())
+                    .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+            if (item.getQuantity() > product.getStock()) {
+                throw new IllegalArgumentException("상품의 재고가 부족합니다.");
+            }
+        }
+    }
+
+    public void saveOrderItems(List<OrderRequest.OrderItem> orderItems, ProductRepository productRepository) {
+        // 주문 항목 저장 로직 (주문 항목의 수량을 확인하여 재고가 부족하면 예외 발생)
+        for (OrderRequest.OrderItem item : orderItems) {
+            Product product = productRepository.findById(item.getProductId())
+                    .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+
+            // 재고 부족 처리
+            if (item.getQuantity() > product.getStock()) {
+                throw new IllegalArgumentException("상품의 재고가 부족합니다.");
+            }
+
+            // 주문 항목 저장
+            OrderProduct orderProduct = new OrderProduct(
+                    item.getProductId(),
+                    this.id,  // 현재 주문의 ID를 사용
+                    product.getPrice() * item.getQuantity(),  // 주문 금액 (상품 가격 * 수량)
+                    item.getQuantity()
+            );
+            // 주문 항목 저장
+            // orderProductRepository.save(orderProduct); // 실제 저장 구현
+        }
+    }
+}
