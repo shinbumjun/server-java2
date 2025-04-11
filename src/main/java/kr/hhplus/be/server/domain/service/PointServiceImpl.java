@@ -2,18 +2,27 @@ package kr.hhplus.be.server.domain.service;
 
 import kr.hhplus.be.server.application.point.PointCriteria;
 import kr.hhplus.be.server.application.point.PointResult;
+import kr.hhplus.be.server.domain.order.Order;
 import kr.hhplus.be.server.domain.point.Point;
+import kr.hhplus.be.server.domain.point.PointHistory;
+import kr.hhplus.be.server.domain.repository.OrderRepository;
+import kr.hhplus.be.server.domain.repository.PointHistoryRepository;
 import kr.hhplus.be.server.domain.repository.PointRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class PointServiceImpl implements PointService {
 
-    private final PointRepository pointRepository;  // 레파지스토리 주입
+    private final PointRepository pointRepository;
+    private final OrderRepository orderRepository;
+    private final PointHistoryRepository pointHistoryRepository;
 
     // 생성자 주입
-    public PointServiceImpl(PointRepository pointRepository) {
+    public PointServiceImpl(PointRepository pointRepository, OrderRepository orderRepository, PointHistoryRepository pointHistoryRepository) {
         this.pointRepository = pointRepository;
+        this.orderRepository = orderRepository;
+        this.pointHistoryRepository = pointHistoryRepository;
     }
 
     @Override
@@ -57,6 +66,51 @@ public class PointServiceImpl implements PointService {
         // 4. 조회된 포인트 반환
         return new PointResult(criteria.getUserId(), point.getBalance(), true, "조회 완료");
     }
+
+    @Override
+    @Transactional
+    public PointResult usePoints(Long orderId) {
+        // 1. 주문 조회
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
+
+        // 2. 주문 상태가 EXPIRED이면 결제 불가
+        if ("EXPIRED".equals(order.getStatus())) {
+            return new PointResult(order.getUserId(), 0, false, "주문 상태가 EXPIRED(결제 불가 건)입니다.");
+        }
+
+        // 3. 포인트 조회 (Point 엔티티에서 직접 처리)
+        Point point = Point.findByUserIdOrThrow(order.getUserId(), pointRepository);
+
+        // 4. 결제 금액이 포인트보다 클 경우
+        try {
+            point.validateBalanceForPayment(order.getTotalAmount());  // 포인트 잔액 검증
+        } catch (IllegalArgumentException e) {
+            return new PointResult(order.getUserId(), point.getBalance(), false,
+                    "포인트 잔액이 부족합니다. 현재 잔액 : " + point.getBalance() + "원, 결제 금액 : " + order.getTotalAmount() + "원");
+        }
+
+        // 5. 포인트 차감
+        point.deductAmount(order.getTotalAmount());  // 포인트 차감
+        pointRepository.save(point);
+
+        // 6. 포인트 사용 내역 저장
+        PointHistory pointHistory = new PointHistory();
+        pointHistory.setPointId(point.getId());
+        pointHistory.setAmount(order.getTotalAmount());
+        pointHistory.setBalance(point.getBalance());
+        pointHistory.setType("사용");
+        pointHistoryRepository.save(pointHistory);
+
+        // 7. 주문 상태 변경 (결제 완료 처리)
+        order.setStatus("PAID");
+        orderRepository.save(order);
+
+        // 8. 결제 성공 시 응답 반환
+        return new PointResult(order.getUserId(), point.getBalance(), true, "포인트 결제 완료");
+    }
+
+
 
 
 }
