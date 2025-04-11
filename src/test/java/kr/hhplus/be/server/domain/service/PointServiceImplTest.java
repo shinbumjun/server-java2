@@ -155,7 +155,8 @@ class PointServiceImplTest {
 
         PointService pointService = new PointServiceImpl(mockPointRepository, mockOrderRepository, mockPointHistoryRepository);
 
-        // When: 포인트 결제 (잔액 부족)
+        // When: 포인트 결제 (잔
+        // 액 부족)
         PointResult result = pointService.usePoints(1L);
 
         // Then: 결제 실패 시 (잔액 부족)
