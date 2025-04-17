@@ -11,6 +11,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -51,7 +54,8 @@ public class CouponServiceImplTest {
         // Given: 유효한 쿠폰
         Long userId = 1L;
         Long couponId = 1L;
-        Coupon coupon = new Coupon(couponId, "10% 할인 쿠폰", "RATE", 10.0, "2025-08-01", "2025-08-31", 10);
+        // Coupon coupon = new Coupon(couponId, "10% 할인 쿠폰", "RATE", 10.0, "2025-08-01", "2025-08-31", 10);
+        Coupon coupon = new Coupon(couponId, "10% 할인 쿠폰", "RATE", BigDecimal.valueOf(10.0), LocalDate.parse("2025-08-01"), LocalDate.parse("2025-08-31"), 10);
         when(couponRepository.findById(couponId)).thenReturn(java.util.Optional.of(coupon));
         when(userCouponRepository.existsByUserIdAndCouponId(userId, couponId)).thenReturn(false);  // 발급된 적 없는 상태
 
@@ -69,7 +73,9 @@ public class CouponServiceImplTest {
         // Given: 재고가 부족한 쿠폰
         Long userId = 1L;
         Long couponId = 1L;
-        Coupon coupon = new Coupon(couponId, "10% 할인 쿠폰", "RATE", 10.0, "2025-08-01", "2025-08-31", 0);  // 재고 0
+        // Coupon coupon = new Coupon(couponId, "10% 할인 쿠폰", "RATE", 10.0, "2025-08-01", "2025-08-31", 0);  // 재고 0
+        Coupon coupon = new Coupon(couponId, "10% 할인 쿠폰", "RATE", BigDecimal.valueOf(10.0), LocalDate.parse("2025-08-01"), LocalDate.parse("2025-08-31"), 10);
+
         when(couponRepository.findById(couponId)).thenReturn(java.util.Optional.of(coupon));
 
         // When: 쿠폰 발급 요청
@@ -87,7 +93,9 @@ public class CouponServiceImplTest {
         // Given: 이미 발급된 쿠폰
         Long userId = 1L;
         Long couponId = 1L;
-        Coupon coupon = new Coupon(couponId, "10% 할인 쿠폰", "RATE", 10.0, "2025-08-01", "2025-08-31", 10);
+        // Coupon coupon = new Coupon(couponId, "10% 할인 쿠폰", "RATE", 10.0, "2025-08-01", "2025-08-31", 10);
+        Coupon coupon = new Coupon(couponId, "10% 할인 쿠폰", "RATE", BigDecimal.valueOf(10.0), LocalDate.parse("2025-08-01"), LocalDate.parse("2025-08-31"), 10);
+
         when(couponRepository.findById(couponId)).thenReturn(java.util.Optional.of(coupon));
         when(userCouponRepository.existsByUserIdAndCouponId(userId, couponId)).thenReturn(true);  // 이미 발급된 상태
 

@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.domain.service;
 
+
 import kr.hhplus.be.server.application.coupon.CouponResult;
 import kr.hhplus.be.server.domain.coupon.Coupon;
 import kr.hhplus.be.server.domain.coupon.UserCoupon;
@@ -47,7 +48,17 @@ public class CouponServiceImpl implements CouponService {
         couponRepository.save(coupon);
 
         // UserCoupon 생성 및 저장 (발급 처리)
-        UserCoupon userCoupon = new UserCoupon(userId, couponId, false, coupon.getCouponName(), coupon.getStartDate(), coupon.getEndDate());
+        // UserCoupon 생성 시 startDate와 endDate를 String으로 변환하여 전달
+        UserCoupon userCoupon = new UserCoupon(
+                userId,
+                couponId,
+                false,
+                coupon.getCouponName(),
+                coupon.getStartDate(),  // LocalDate -> 직접 전달
+                coupon.getEndDate()     // LocalDate -> 직접 전달
+        );
+
+
         userCouponRepository.save(userCoupon);
 
         return new CouponResult(201, "요청이 정상적으로 처리되었습니다.", userId, "issued", null);

@@ -16,10 +16,13 @@ spring:
     generate-ddl: false
     show-sql: false
     hibernate:
-      ddl-auto: none
+      ddl-auto: update # none
     properties:
       hibernate.timezone.default_storage: NORMALIZE_UTC
       hibernate.jdbc.time_zone: UTC
+  sql:
+    init:
+      mode: always  # 항상 data.sql 실행
 
 ---
 spring.config.activate.on-profile: local, test

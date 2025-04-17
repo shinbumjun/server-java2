@@ -3,6 +3,7 @@ package kr.hhplus.be.server.domain.order;
 import jakarta.persistence.*;
 import kr.hhplus.be.server.interfaces.order.OrderRequest;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import kr.hhplus.be.server.domain.product.Product;
 import kr.hhplus.be.server.domain.repository.ProductRepository;
@@ -14,6 +15,7 @@ import java.util.List;
 @Table(name = "orders")
 @Getter
 @Setter
+@NoArgsConstructor
 public class Order {
 
     @Id
