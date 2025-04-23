@@ -8,22 +8,17 @@ import kr.hhplus.be.server.domain.point.PointHistory;
 import kr.hhplus.be.server.domain.repository.OrderRepository;
 import kr.hhplus.be.server.domain.repository.PointHistoryRepository;
 import kr.hhplus.be.server.domain.repository.PointRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor // 생성자 자동 생성
 public class PointServiceImpl implements PointService {
 
     private final PointRepository pointRepository;
     private final OrderRepository orderRepository;
     private final PointHistoryRepository pointHistoryRepository;
-
-    // 생성자 주입
-    public PointServiceImpl(PointRepository pointRepository, OrderRepository orderRepository, PointHistoryRepository pointHistoryRepository) {
-        this.pointRepository = pointRepository;
-        this.orderRepository = orderRepository;
-        this.pointHistoryRepository = pointHistoryRepository;
-    }
 
     @Override
     public PointResult chargePoints(PointCriteria criteria) {
@@ -46,7 +41,7 @@ public class PointServiceImpl implements PointService {
     }
 
     @Override
-    public PointResult getPoints(PointCriteria criteria) {
+    public PointResult getPoints(PointCriteria criteria) { // 사용자 ID, 충전금액
         // 1. 포인트 조회
         Point point = pointRepository.findByUserId(criteria.getUserId());
 
