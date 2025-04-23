@@ -59,17 +59,27 @@ public class Coupon {
         this.updatedAt = LocalDateTime.now();
     }
 
-    // 정책 검증: 쿠폰 재고가 0 이하일 경우 예외
+
+    // 쿠폰 재고가 0 이하일 경우 예외 처리
     public void validateStock() {
         if (this.stock <= 0) {
             throw new IllegalStateException("쿠폰 재고가 부족합니다.");
         }
     }
 
-    // 유효성 검증: 쿠폰 유효 기간 검사
+    // 쿠폰 유효 기간 검사
     public void validateDates() {
         if (this.startDate.isAfter(this.endDate)) {
             throw new IllegalStateException("유효기간이 잘못 설정되었습니다.");
         }
     }
+
+    // 재고 차감 메서드
+    public void decreaseStock() {
+        if (this.stock <= 0) {
+            throw new IllegalStateException("재고가 부족합니다.");
+        }
+        this.stock -= 1;  // 재고 차감
+    }
 }
+

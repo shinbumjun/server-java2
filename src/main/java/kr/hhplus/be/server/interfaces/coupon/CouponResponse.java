@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.AllArgsConstructor;
 
+// 개별 쿠폰 정보
 @Getter
 @Setter
 @AllArgsConstructor

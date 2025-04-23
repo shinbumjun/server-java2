@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-public class UserCoupon {
+public class UserCoupon { // 유저의 쿠폰 발급 내역
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // 자동 증가 설정
@@ -55,15 +55,12 @@ public class UserCoupon {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public UserCoupon(Long userId, Long couponId, boolean b, String couponName, LocalDate startDate, LocalDate endDate) {
-    }
-
     // 정책 검증: 이미 발급된 쿠폰을 다시 발급할 수 없도록 처리
-    public void validateDuplicateIssue(UserCouponRepository userCouponRepository) {
-        if (userCouponRepository.existsByUserIdAndCouponId(this.userId, this.couponId)) {
-            throw new IllegalStateException("이미 쿠폰을 발급 받았습니다.");
-        }
-    }
+//    public void validateDuplicateIssue(UserCouponRepository userCouponRepository) {
+//        if (userCouponRepository.existsByUserIdAndCouponId(this.userId, this.couponId)) {
+//            throw new IllegalStateException("이미 쿠폰을 발급 받았습니다.");
+//        }
+//    }
 
     // 유효성 검증: 쿠폰 사용 여부 확인
     public void validateUsage() {

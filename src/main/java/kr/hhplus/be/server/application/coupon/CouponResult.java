@@ -3,6 +3,7 @@ package kr.hhplus.be.server.application.coupon;
 import lombok.Getter;
 import lombok.Setter;
 
+// 쿠폰 전체 응답 관리
 @Getter
 @Setter
 public class CouponResult {
@@ -13,10 +14,6 @@ public class CouponResult {
     private Long userId;      // 사용자 ID
     private String dataType;  // 예: "coupons"
     private Object data;      // 실제 데이터 (쿠폰 목록 등)
-
-    // 기본 생성자
-    public CouponResult() {
-    }
 
     // 생성자
     public CouponResult(int code, String message, Long userId, String dataType, Object data) {

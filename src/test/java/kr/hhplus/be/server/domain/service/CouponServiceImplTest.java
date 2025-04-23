@@ -55,7 +55,9 @@ public class CouponServiceImplTest {
         Long userId = 1L;
         Long couponId = 1L;
         // Coupon coupon = new Coupon(couponId, "10% 할인 쿠폰", "RATE", 10.0, "2025-08-01", "2025-08-31", 10);
+        // Coupon coupon = new Coupon(couponId, "10% 할인 쿠폰", "RATE", BigDecimal.valueOf(10.0), LocalDate.parse("2025-08-01"), LocalDate.parse("2025-08-31"), 10);
         Coupon coupon = new Coupon(couponId, "10% 할인 쿠폰", "RATE", BigDecimal.valueOf(10.0), LocalDate.parse("2025-08-01"), LocalDate.parse("2025-08-31"), 10);
+
         when(couponRepository.findById(couponId)).thenReturn(java.util.Optional.of(coupon));
         when(userCouponRepository.existsByUserIdAndCouponId(userId, couponId)).thenReturn(false);  // 발급된 적 없는 상태
 
