@@ -2,6 +2,7 @@ package kr.hhplus.be.server.interfaces.coupon;
 
 import kr.hhplus.be.server.application.coupon.CouponFacade;
 import kr.hhplus.be.server.application.coupon.CouponResult;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -9,13 +10,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/coupons")
+@RequiredArgsConstructor // 생성자 자동 생성
 public class CouponController {
 
     private final CouponFacade couponFacade;
-
-    public CouponController(CouponFacade couponFacade) {
-        this.couponFacade = couponFacade;
-    }
 
     // 사용자 보유 쿠폰 조회
     @GetMapping

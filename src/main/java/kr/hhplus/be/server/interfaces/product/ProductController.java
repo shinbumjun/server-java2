@@ -2,23 +2,33 @@ package kr.hhplus.be.server.interfaces.product;
 
 import kr.hhplus.be.server.application.product.ProductFacade;
 import kr.hhplus.be.server.domain.product.Product;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
+@RequiredArgsConstructor // 생성자 자동 생성
 public class ProductController {
 
     private final ProductFacade productFacade;
 
-    public ProductController(ProductFacade productFacade) {
-        this.productFacade = productFacade;
-    }
-
     @GetMapping("/api/v1/products")
     public ProductResponse getProducts() {
         List<Product> products = productFacade.getProducts(); // 상품 목록 조회
-        return new ProductResponse(200, "요청이 정상적으로 처리되었습니다.", (ProductResponse.ProductData) products);
+
+        // Product 엔티티를 ProductDto로 변환
+        List<ProductResponse.ProductDto> productDtos = products.stream()
+                .map(product -> new ProductResponse.ProductDto(
+                        product.getId(),
+                        product.getProductName(),
+                        product.getPrice(),
+                        product.getStock()))
+                .collect(Collectors.toList());
+
+        // ProductResponse를 생성하여 반환
+        return new ProductResponse(200, "요청이 정상적으로 처리되었습니다.", new ProductResponse.ProductData(productDtos));
     }
 }

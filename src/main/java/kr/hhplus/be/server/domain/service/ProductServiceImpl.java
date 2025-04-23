@@ -2,19 +2,16 @@ package kr.hhplus.be.server.domain.service;
 
 import kr.hhplus.be.server.domain.product.Product;
 import kr.hhplus.be.server.domain.repository.ProductRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor // 생성자 자동 생성
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
-
-    // 생성자 주입
-    public ProductServiceImpl(ProductRepository productRepository) {
-        this.productRepository = productRepository;
-    }
 
     @Override
     public List<Product> getProducts() {
