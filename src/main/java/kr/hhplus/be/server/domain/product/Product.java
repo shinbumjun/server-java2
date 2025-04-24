@@ -37,4 +37,16 @@ public class Product {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;  // 업데이트일
+
+    // 재고가 부족한지 확인
+    public void validateStock(Integer quantity) {
+        if (this.stock < quantity) {
+            throw new IllegalStateException("상품의 재고가 부족합니다.");
+        }
+    }
+
+    // 재고 차감
+    public void reduceStock(Integer quantity) {
+        this.stock -= quantity;
+    }
 }

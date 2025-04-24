@@ -50,27 +50,4 @@ public class Order {
             }
         }
     }
-
-    public void saveOrderItems(List<OrderRequest.OrderItem> orderItems, ProductRepository productRepository) {
-        // 주문 항목 저장 로직 (주문 항목의 수량을 확인하여 재고가 부족하면 예외 발생)
-        for (OrderRequest.OrderItem item : orderItems) {
-            Product product = productRepository.findById(item.getProductId())
-                    .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
-
-            // 재고 부족 처리
-            if (item.getQuantity() > product.getStock()) {
-                throw new IllegalArgumentException("상품의 재고가 부족합니다.");
-            }
-
-            // 주문 항목 저장
-            OrderProduct orderProduct = new OrderProduct(
-                    item.getProductId(),
-                    this.id,  // 현재 주문의 ID를 사용
-                    product.getPrice() * item.getQuantity(),  // 주문 금액 (상품 가격 * 수량)
-                    item.getQuantity()
-            );
-            // 주문 항목 저장
-            // orderProductRepository.save(orderProduct); // 실제 저장 구현
-        }
-    }
 }

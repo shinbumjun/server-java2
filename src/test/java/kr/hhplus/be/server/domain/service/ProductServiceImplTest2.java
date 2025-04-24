@@ -5,13 +5,13 @@ import kr.hhplus.be.server.domain.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+
 import java.util.Arrays;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class ProductServiceImplTest {
+class ProductServiceImplTest2 {
 
     private ProductRepository productRepository;
     private ProductServiceImpl productService;
@@ -40,5 +40,7 @@ class ProductServiceImplTest {
         assertEquals("Macbook Pro", result.get(0).getProductName());
         assertEquals("iPhone 12", result.get(1).getProductName());
     }
+
+
 
 }

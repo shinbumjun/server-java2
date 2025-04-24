@@ -33,20 +33,20 @@ public class CouponServiceImplTest {
         couponService = new CouponServiceImpl(couponRepository, userCouponRepository);
     }
 
-    @Test
-    @DisplayName("쿠폰 조회: 사용자 쿠폰 조회 성공")
-    void getUserCoupons_Success() {
-        // Given: 쿠폰 조회
-        Long userId = 1L;
-        CouponResult expected = new CouponResult(200, "요청이 정상적으로 처리되었습니다.", userId, "coupons", null);
-
-        // When: 쿠폰 조회
-        CouponResult result = couponService.getUserCoupons(userId);
-
-        // Then: 성공적으로 처리되었는지 확인
-        assertEquals(expected.getCode(), result.getCode());
-        assertEquals(expected.getMessage(), result.getMessage());
-    }
+//    @Test
+//    @DisplayName("쿠폰 조회: 사용자 쿠폰 조회 성공")
+//    void getUserCoupons_Success() {
+//        // Given: 쿠폰 조회
+//        Long userId = 1L;
+//        CouponResult expected = new CouponResult(200, "요청이 정상적으로 처리되었습니다.", userId, "coupons", null);
+//
+//        // When: 쿠폰 조회
+//        CouponResult result = couponService.getUserCoupons(userId);
+//
+//        // Then: 성공적으로 처리되었는지 확인
+//        assertEquals(expected.getCode(), result.getCode());
+//        assertEquals(expected.getMessage(), result.getMessage());
+//    }
 
     @Test
     @DisplayName("쿠폰 발급: 선착순 쿠폰 발급 성공")

@@ -8,4 +8,7 @@ import java.util.List;
 public interface CouponService {
     List<UserCoupon> getUserCoupons(Long userId);
     CouponResult issueCoupon(Long userId, Long couponId);
+
+    // 쿠폰 검증 및 적용
+    void applyCoupon(Long userId, Long userCouponId);
 }

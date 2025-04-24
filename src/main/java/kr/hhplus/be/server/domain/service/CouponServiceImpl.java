@@ -20,47 +20,13 @@ public class CouponServiceImpl implements CouponService {
     private final CouponRepository couponRepository;
     private final UserCouponRepository userCouponRepository;
 
-//    @Override
-//    public CouponResult getUserCoupons(Long userId) {
-//        // 1. 쿠폰 조회 로직
-//        // 사용자 쿠폰 조회
-//        List<UserCoupon> userCoupons = userCouponRepository.findByUserId(userId);
-//
-//        // 조회된 쿠폰이 없으면 결과에 "없음" 메시지 반환
-//        if (userCoupons.isEmpty()) {
-//            return new CouponResult(200, "사용자 보유 쿠폰이 없습니다.", userId, "coupons", null);
-//        }
-//
-//        // 2. 쿠폰 응답 변환
-//        // 사용자 보유 쿠폰 정보를 CouponResponse 형태로 변환
-//        List<CouponResponse> couponResponses = userCoupons.stream()
-//                .map(userCoupon -> {
-//                    // couponId를 이용해 Coupon 객체 조회
-//                    Coupon coupon = couponRepository.findById(userCoupon.getCouponId())
-//                            .orElseThrow(() -> new IllegalStateException("쿠폰을 찾을 수 없습니다."));
-//
-//                    // CouponResponse 생성
-//                    return new CouponResponse(
-//                            coupon.getId(),
-//                            coupon.getCouponName(),
-//                            coupon.getDiscountType(),
-//                            coupon.getStartDate().toString(),
-//                            coupon.getEndDate().toString()
-//                    );
-//                })
-//                .collect(Collectors.toList());
-//
-//        // 3. 결과 반환
-//        // CouponResult에 사용자 쿠폰 정보 담아서 반환
-//        return new CouponResult(200, "요청이 정상적으로 처리되었습니다.", userId, "coupons", couponResponses);
-//    }
-    @Override
+    @Override // 사용자 보유 쿠폰 조회
     public List<UserCoupon> getUserCoupons(Long userId) {
         return userCouponRepository.findByUserId(userId);
     }
 
 
-    @Override
+    @Override // 선착순 쿠폰 발급
     public CouponResult issueCoupon(Long userId, Long couponId) {
         // 쿠폰 조회
         Coupon coupon = couponRepository.findById(couponId)
@@ -88,4 +54,32 @@ public class CouponServiceImpl implements CouponService {
 
         return new CouponResult(201, "요청이 정상적으로 처리되었습니다.", userId, "issued", null);
     }
+
+    @Override // 쿠폰 검증 및 적용
+    public void applyCoupon(Long userId, Long userCouponId) {
+        // 1. 사용자 쿠폰 조회
+        UserCoupon userCoupon = userCouponRepository.findById(userCouponId)
+                .orElseThrow(() -> new IllegalStateException("쿠폰을 찾을 수 없습니다."));
+
+        // 2. 쿠폰이 유효한지 검증
+        Coupon coupon = couponRepository.findById(userCoupon.getCouponId())
+                .orElseThrow(() -> new IllegalStateException("쿠폰을 찾을 수 없습니다."));
+
+        // 3. 쿠폰 사용 여부 검증
+        userCoupon.validateUsage(); // 쿠폰이 이미 사용되었는지 확인 (엔티티 내 메서드)
+
+        // 4. 쿠폰의 유효 기간 검증
+        coupon.validateDates(); // 쿠폰이 유효 기간 내에 있는지 확인 (엔티티 내 메서드)
+
+        // 5. 쿠폰을 적용하여 주문에 반영 -> 할인 적용은 쿠폰 검증에서 이루어지지 않는다
+        // 예: 할인을 적용하는 로직 (쿠폰의 할인 금액을 주문에 반영)
+        // applyDiscountToOrder() 메서드 등을 호출하여 할인 적용
+
+        // 6. 쿠폰 사용 처리 (쿠폰을 사용했다고 표시)
+        userCoupon.setIsUsed(true); // 쿠폰 사용 처리
+        userCouponRepository.save(userCoupon); // 저장
+    }
+
+
+
 }

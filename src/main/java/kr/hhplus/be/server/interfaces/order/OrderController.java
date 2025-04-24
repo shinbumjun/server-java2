@@ -2,17 +2,15 @@ package kr.hhplus.be.server.interfaces.order;
 
 import kr.hhplus.be.server.application.order.OrderFacade;
 import kr.hhplus.be.server.interfaces.order.OrderResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/orders")
+@RequiredArgsConstructor // 생성자 자동 생성
 public class OrderController {
 
     private final OrderFacade orderFacade;
-
-    public OrderController(OrderFacade orderFacade) {
-        this.orderFacade = orderFacade;
-    }
 
     @PostMapping
     public OrderResponse createOrder(@RequestBody OrderRequest orderRequest) {
