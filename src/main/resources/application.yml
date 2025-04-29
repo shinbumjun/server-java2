@@ -14,7 +14,7 @@ spring:
   jpa:
     open-in-view: false
     generate-ddl: false
-    show-sql: false
+    show-sql: true # false
     hibernate:
       ddl-auto: update # none
     properties:
@@ -23,6 +23,10 @@ spring:
   sql:
     init:
       mode: always  # 항상 data.sql 실행
+  logging:
+    level:
+      root: DEBUG # 디버깅 로깅 활성화
+      org.springframework: DEBUG # Spring의 디버깅 로그를 출력
 
 ---
 spring.config.activate.on-profile: local, test
