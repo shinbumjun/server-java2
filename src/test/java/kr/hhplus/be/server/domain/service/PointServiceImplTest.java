@@ -186,6 +186,58 @@ class PointServiceImplTest {
         assertEquals("주문 상태가 EXPIRED(결제 불가 건)입니다.", result.getDetail());  // 오류 메시지
     }
 
+    @Test
+    @DisplayName("성공: 포인트로 결제에 성공한다")
+    void usePoints_success() {
+        LocalDateTime now = LocalDateTime.now();
+        Long orderId = 1L;
+        Order order = new Order();
+        order.setId(orderId);
+        order.setUserId(1L);
+        order.setStatus("NOT_PAID");
+        order.setTotalAmount(10000);
+
+        Point point = new Point(1L, 1L, 20000, now, now);
+
+        when(mockOrderRepository.findById(orderId)).thenReturn(Optional.of(order));
+        when(mockPointRepository.findByUserId(1L)).thenReturn(point);
+
+        PointService pointService = new PointServiceImpl(mockPointRepository, mockOrderRepository, mockPointHistoryRepository);
+        PointResult result = pointService.usePoints(orderId);
+
+        assertTrue(result.isSuccess());
+        assertEquals(10000, result.getBalance());
+    }
+
+
+    @Test
+    @DisplayName("실패: 포인트 부족으로 결제 실패")
+    void usePoints_fail_insufficient() {
+        // given
+        LocalDateTime now = LocalDateTime.now();  // 현재 시간
+        Long orderId = 1L;
+
+        Order order = new Order();
+        order.setId(orderId);
+        order.setUserId(1L);
+        order.setStatus("NOT_PAID");
+        order.setTotalAmount(30000); // 결제 금액
+
+        Point point = new Point(1L, 1L, 10000, now, now); // 잔액 부족
+
+        when(mockOrderRepository.findById(orderId)).thenReturn(Optional.of(order));
+        when(mockPointRepository.findByUserId(1L)).thenReturn(point);
+
+        PointService pointService = new PointServiceImpl(mockPointRepository, mockOrderRepository, mockPointHistoryRepository);
+
+        // when
+        PointResult result = pointService.usePoints(orderId);
+
+        // then
+        assertFalse(result.isSuccess());
+        assertEquals(409, result.getCode());
+        assertTrue(result.getDetail().contains("잔액이 부족"));
+    }
 
 
 
