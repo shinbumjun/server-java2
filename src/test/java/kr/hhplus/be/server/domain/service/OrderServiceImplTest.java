@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.domain.service;
 
+import kr.hhplus.be.server.domain.repository.OrderProductRepository;
 import kr.hhplus.be.server.domain.repository.OrderRepository;
 import kr.hhplus.be.server.interfaces.order.OrderRequest;
 import kr.hhplus.be.server.domain.order.Order;
@@ -14,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,6 +28,9 @@ class OrderServiceImplTest {
 
     @Mock
     private ProductRepository productRepository;
+
+    @Mock
+    private OrderProductRepository orderProductRepository;
 
     @InjectMocks
     private OrderServiceImpl orderService;
@@ -52,7 +57,12 @@ class OrderServiceImplTest {
         Order savedOrder = new Order(1L, 1L, false, 10000, "NOT_PAID", null, null);
         savedOrder.setId(1L);  // ID를 1L로 설정
 
-        when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);  // save가 order를 반환하도록 설정
+        // when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);  // save가 order를 반환하도록 설정
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
+            Order saved = invocation.getArgument(0);
+            saved.setId(1L);  // 테스트용 ID 설정
+            return saved;
+        });
 
         // When: 주문 생성 호출
         Long orderId = orderService.createOrder(orderRequest);
@@ -109,4 +119,67 @@ class OrderServiceImplTest {
             orderService.expireOrder(null);
         });
     }
+
+    @Test
+    @DisplayName("성공: 주문 ID로 주문을 조회한다")
+    void getOrderById_success() {
+        // given
+        Order order = new Order();
+        order.setId(1L);
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        // when
+        Order foundOrder = orderService.getOrderById(1L);
+
+        // then
+        assertNotNull(foundOrder);
+        assertEquals(1L, foundOrder.getId());
+    }
+
+    @Test
+    @DisplayName("실패: 주문 ID가 존재하지 않으면 예외 발생")
+    void getOrderById_fail() {
+        // given
+        when(orderRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // expect
+        assertThrows(IllegalArgumentException.class, () -> {
+            orderService.getOrderById(1L);
+        });
+    }
+
+    @Test
+    @DisplayName("성공: 주문 상태를 PAID로 변경")
+    void updateOrderStatusToPaid_success() {
+        // given
+        Order order = new Order();
+        order.setId(1L);
+        order.setStatus("NOT_PAID");
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        // when
+        orderService.updateOrderStatusToPaid(1L);
+
+        // then
+        assertEquals("PAID", order.getStatus());
+        verify(orderRepository).save(order);
+    }
+
+    @Test
+    @DisplayName("실패: EXPIRED 상태의 주문은 PAID로 변경 불가")
+    void updateOrderStatusToPaid_fail_expired() {
+        // given
+        Order order = new Order();
+        order.setId(1L);
+        order.setStatus("EXPIRED");
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        // expect
+        assertThrows(IllegalStateException.class, () -> {
+            orderService.updateOrderStatusToPaid(1L);
+        });
+    }
+
 }
