@@ -2,6 +2,7 @@ package kr.hhplus.be.server.domain.service;
 
 import kr.hhplus.be.server.application.coupon.CouponResult;
 import kr.hhplus.be.server.domain.coupon.Coupon;
+import kr.hhplus.be.server.domain.coupon.UserCoupon;
 import kr.hhplus.be.server.domain.repository.CouponRepository;
 import kr.hhplus.be.server.domain.repository.UserCouponRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Optional;
 
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -111,5 +113,31 @@ public class CouponServiceImplTest {
         // assertEquals("이미 쿠폰을 발급 받았습니다.", result.getDetail());
     }
 
+    @Test
+    @DisplayName("성공: 사용된 쿠폰이면 사용 취소 처리된다")
+    void revertCouponIfUsed_success() {
+        // given
+        Long userCouponId = 1L;
+        UserCoupon usedCoupon = new UserCoupon();
+        usedCoupon.setId(userCouponId);
+        usedCoupon.setIsUsed(true); // 이미 사용된 상태
+
+        when(userCouponRepository.findById(userCouponId)).thenReturn(Optional.of(usedCoupon));
+
+        // when
+        couponService.revertCouponIfUsed(userCouponId);
+
+        // then
+        assertFalse(usedCoupon.getIsUsed()); // isUsed 가 false 로 바뀌어야 함
+        verify(userCouponRepository, times(1)).save(usedCoupon); // 저장 호출 여부 확인
+    }
+
+    @Test
+    @DisplayName("실패: userCouponId 가 null 이면 아무 동작 안함")
+    void revertCouponIfUsed_fail_withNull() {
+        // when & then
+        assertDoesNotThrow(() -> couponService.revertCouponIfUsed(null));
+        verify(userCouponRepository, never()).save(any());
+    }
 
 }
