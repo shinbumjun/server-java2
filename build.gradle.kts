@@ -50,6 +50,7 @@ dependencies {
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
 	// redis
+	testImplementation("com.redis:testcontainers-redis")
 	// implementation("org.springframework.boot:spring-boot-starter-data-redis")
 }
 

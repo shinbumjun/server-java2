@@ -49,4 +49,9 @@ public class Product {
     public void reduceStock(Integer quantity) {
         this.stock -= quantity;
     }
+
+    // 재고 복구 (EXPIRED된 주문의 경우)
+    public void increaseStock(int quantity) {
+        this.stock += quantity;
+    }
 }

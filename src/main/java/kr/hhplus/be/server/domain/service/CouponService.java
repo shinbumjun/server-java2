@@ -11,4 +11,7 @@ public interface CouponService {
 
     // 쿠폰 검증 및 적용
     void applyCoupon(Long userId, Long userCouponId);
+
+    // 쿠폰 취소
+    void cancelCouponUsage(Long userCouponId);
 }
