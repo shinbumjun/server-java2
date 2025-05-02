@@ -67,4 +67,20 @@ class PointFacadeImplTest {
 
     }
 
+    @Test
+    @DisplayName("실패: 주문 상태가 EXPIRED일 경우 결제 불가")
+    void processPointPayment_fail_expiredOrder() {
+        // given
+        pointRepository.save(new Point(null, 1L, 50000, now(), now()));
+        Order order = orderRepository.save(new Order(1L, null, false, 20000, "EXPIRED", now(), now()));
+
+        // when
+        PointResult result = pointService.usePoints(order.getId());
+
+        // then
+        assertFalse(result.isSuccess());
+        assertEquals(409, result.getCode());
+        assertEquals("주문 상태가 EXPIRED(결제 불가 건)입니다.", result.getDetail());
+    }
+
 }
