@@ -33,7 +33,11 @@ public class CouponServiceImpl implements CouponService {
                 .orElseThrow(() -> new IllegalStateException("쿠폰을 찾을 수 없습니다."));
 
         // 쿠폰 재고 확인 및 유효성 검증
-        coupon.validateStock();  // 재고가 부족한 경우 예외가 발생
+        try {
+            coupon.validateStock(); // 재고가 부족한 경우 예외가 발생
+        } catch (IllegalStateException e) {
+            return new CouponResult(409, "비즈니스 정책을 위반한 요청입니다.", userId, "issued", e.getMessage());
+        }
         coupon.validateDates();  // 유효기간 검증
 
         // 이미 발급된 쿠폰 확인

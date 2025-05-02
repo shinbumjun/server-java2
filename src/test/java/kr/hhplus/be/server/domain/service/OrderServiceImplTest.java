@@ -86,4 +86,27 @@ class OrderServiceImplTest {
         assertEquals("상품의 재고가 부족합니다.", exception.getMessage());  // 예외 메시지가 정확한지 확인
     }
 
+    @Test
+    @DisplayName("성공: 주문 상태를 EXPIRED로 변경한다")
+    void expireOrder_success() {
+        // given
+        Order order = new Order();
+        order.setStatus("NOT_PAID");
+
+        // when
+        orderService.expireOrder(order);
+
+        // then
+        assertEquals("EXPIRED", order.getStatus());
+        verify(orderRepository, times(1)).save(order);
+    }
+
+    @Test
+    @DisplayName("실패: order가 null이면 예외 발생")
+    void expireOrder_fail_whenOrderIsNull() {
+        // expect
+        assertThrows(NullPointerException.class, () -> {
+            orderService.expireOrder(null);
+        });
+    }
 }
