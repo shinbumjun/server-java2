@@ -60,33 +60,11 @@ public class PointController {
         return ResponseEntity.ok(response);
     }
 
-//    // 포인트 결제 API
-//    @PostMapping("/use")
-//    public ResponseEntity<PointResponse> usePointsForPayment(@RequestBody PointPaymentRequest request) { // 결제할 주문 ID
-//        try {
-//            // 포인트 결제 처리
-//            pointFacade.processPointPayment(request.getOrderId());
-//
-//            // 주문 상태 변경: 결제 성공시 상태를 PAID로 업데이트
-//            orderService.updateOrderStatusToPaid(request.getOrderId());
-//
-//            // 성공적인 응답 반환
-//            return ResponseEntity.noContent().build();
-//        } catch (InsufficientPointsException e) {
-//            // 포인트 부족 오류 처리
-//            return ResponseEntity.status(HttpStatus.CONFLICT).body(
-//                    new PointResponse(409, "비즈니스 정책을 위반한 요청입니다.", e.getMessage())
-//            );
-//        } catch (OrderExpiredException e) {
-//            // 주문 상태가 EXPIRED인 경우 처리
-//            return ResponseEntity.status(HttpStatus.CONFLICT).body(
-//                    new PointResponse(409, "비즈니스 정책을 위반한 요청입니다.", e.getMessage())
-//            );
-//        } catch (Exception e) {
-//            // 기타 예외 처리
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-//                    new PointResponse(500, "서버 오류", "알 수 없는 오류가 발생했습니다.")
-//            );
-//        }
-//    }
+    // 포인트 결제 API
+    @PostMapping("/use")
+    public ResponseEntity<Void> usePointsForPayment(@RequestBody PointPaymentRequest request) {
+        pointFacade.processPointPayment(request.getOrderId()); // 포인트 결제 처리
+        orderService.updateOrderStatusToPaid(request.getOrderId()); // 주문 상태 변경: 결제 성공시 상태를 PAID로 업데이트
+        return ResponseEntity.noContent().build(); // 204 No Content
+    }
 }

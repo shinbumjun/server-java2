@@ -7,4 +7,7 @@ public interface PointFacade {
 
     // 포인트 조회
     PointResult getPoints(PointCriteria criteria);
+
+    // 포인트 결제 처리
+    void processPointPayment(Long orderId);
 }

@@ -50,4 +50,19 @@ public class Order {
             }
         }
     }
+
+    // 주문 상태 검증 (EXPIRED면 결제 불가 예외 발생)
+    public void validatePayable() {
+        if ("EXPIRED".equals(this.status)) {
+            throw new IllegalStateException("주문 상태가 EXPIRED입니다. 결제가 불가능합니다.");
+        }
+    }
+
+    // 주문 상태를 PAID로 변경
+    public void updateStatusToPaid() {
+        if ("EXPIRED".equals(this.status)) {
+            throw new IllegalStateException("EXPIRED 상태의 주문은 결제 완료로 변경할 수 없습니다.");
+        }
+        this.status = "PAID";
+    }
 }

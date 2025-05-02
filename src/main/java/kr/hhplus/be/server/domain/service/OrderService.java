@@ -13,4 +13,10 @@ public interface OrderService {
     List<Order> getUnpaidOrdersBefore(LocalDateTime fiveMinutesAgo);
 
     void expireOrder(Order order); // 상태 EXPIRED로 변경
+
+    // 주문 상태 변경: 결제 성공시 상태를 PAID로 업데이트
+    void updateOrderStatusToPaid(Long orderId);
+
+    // 주문 조회
+    Order getOrderById(Long orderId);
 }

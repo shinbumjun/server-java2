@@ -69,6 +69,21 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order); // 상태 업데이트
     }
 
+    @Override // 주문 조회
+    public Order getOrderById(Long orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다. orderId=" + orderId));
+    }
+
+    @Override // 주문 상태 변경: 결제 성공시 상태를 PAID로 업데이트
+    public void updateOrderStatusToPaid(Long orderId) {
+        Order order = getOrderById(orderId); // 주문 가져오기
+        order.updateStatusToPaid(); // 도메인에서 상태 변경 (EXPIRED일 경우 내부에서 막게 할 수 있음)
+        orderRepository.save(order); // 변경 사항 저장
+    }
+
+
+
 //    // 5분마다 실행되는 스케줄러: 결제되지 않은 주문을 EXPIRED 상태로 처리
 //    // 5분 내 미결제 주문 취소 + 쿠폰 & 재고 복구
 //    @Transactional
