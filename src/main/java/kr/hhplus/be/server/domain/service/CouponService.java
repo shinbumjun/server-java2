@@ -13,5 +13,8 @@ public interface CouponService {
     void applyCoupon(Long userId, Long userCouponId);
 
     // 쿠폰 취소
-    void cancelCouponUsage(Long userCouponId);
+    // void cancelCouponUsage(Long userCouponId);
+
+    // 쿠폰 복구
+    void revertCouponIfUsed(Long userCouponId);
 }

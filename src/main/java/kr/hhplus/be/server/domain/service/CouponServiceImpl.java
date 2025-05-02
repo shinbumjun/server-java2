@@ -80,14 +80,27 @@ public class CouponServiceImpl implements CouponService {
         userCouponRepository.save(userCoupon); // 저장
     }
 
+    // 쿠폰 복구
     @Override
-    public void cancelCouponUsage(Long userCouponId) {
-        UserCoupon userCoupon = userCouponRepository.findById(userCouponId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 쿠폰을 찾을 수 없습니다."));
+    public void revertCouponIfUsed(Long userCouponId) {
+        if (userCouponId == null) return; // 주문에 쿠폰이 적용된 경우
 
-        userCoupon.setIsUsed(false);  // 쿠폰 사용 상태를 false로 되돌림
-        userCouponRepository.save(userCoupon); // DB에 저장
+        UserCoupon userCoupon = userCouponRepository.findById(userCouponId).orElse(null);
+
+        if (userCoupon != null && Boolean.TRUE.equals(userCoupon.getIsUsed())) { // 쿠폰이 실제로 사용된 경우에만 사용 취소
+            userCoupon.setIsUsed(false);
+            userCouponRepository.save(userCoupon);
+        }
     }
+
+//    @Override
+//    public void cancelCouponUsage(Long userCouponId) {
+//        UserCoupon userCoupon = userCouponRepository.findById(userCouponId)
+//                .orElseThrow(() -> new IllegalArgumentException("사용자 쿠폰을 찾을 수 없습니다."));
+//
+//        userCoupon.setIsUsed(false);  // 쿠폰 사용 상태를 false로 되돌림
+//        userCouponRepository.save(userCoupon); // DB에 저장
+//    }
 
 
 }

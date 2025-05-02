@@ -1,6 +1,8 @@
 package kr.hhplus.be.server.domain.service;
 
+import kr.hhplus.be.server.domain.order.OrderProduct;
 import kr.hhplus.be.server.domain.product.Product;
+import kr.hhplus.be.server.domain.repository.OrderProductRepository;
 import kr.hhplus.be.server.domain.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,6 +16,7 @@ import java.util.List;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
+    private final OrderProductRepository orderProductRepository;
 
     @Transactional
     @Override
@@ -35,5 +38,22 @@ public class ProductServiceImpl implements ProductService {
 
         // 3. 변경된 상품 상태 저장
         productRepository.saveAndFlush(product); // 변경된 내용 즉시 DB에 반영
+    }
+
+    // 재고 복구
+    @Override
+    public void revertStockByOrder(Long orderId) {
+        // 재고 복구 처리
+        List<OrderProduct> orderProducts = orderProductRepository.findByOrdersId(orderId);
+
+        for (OrderProduct op : orderProducts) {
+            Product product = productRepository.findById(op.getProductId())
+                    .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+
+            // 주문 수량만큼 재고 되돌리기
+            product.increaseStock(op.getQuantity());
+            // 재고 복구 저장
+            productRepository.save(product);
+        }
     }
 }
