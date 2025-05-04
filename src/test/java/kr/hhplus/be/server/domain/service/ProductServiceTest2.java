@@ -4,6 +4,7 @@ import kr.hhplus.be.server.domain.order.OrderProduct;
 import kr.hhplus.be.server.domain.product.Product;
 import kr.hhplus.be.server.domain.repository.OrderProductRepository;
 import kr.hhplus.be.server.domain.repository.ProductRepository;
+import kr.hhplus.be.server.interfaces.product.ProductBestDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,7 +19,7 @@ import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
-class ProductServiceTest2 {
+class ProductServiceTest2 { // 단위 테스트
 
     @Mock
     private ProductRepository productRepository;
@@ -70,4 +71,39 @@ class ProductServiceTest2 {
             productService.revertStockByOrder(orderId);
         });
     }
+
+    @Test
+    @DisplayName("성공: 판매량 상위 5개 상품 반환")
+    void getTop5BestSellingProducts_success() { // 단위 테스트이기 때문에 정렬을 직접 해줘야 한다
+        // given
+        Object[] row1 = new Object[]{1L, "상품A", 1000, 10, 50}; // id, name, price, stock, sales
+        Object[] row2 = new Object[]{2L, "상품B", 2000, 20, 40};
+
+        when(orderProductRepository.findTop5SellingProductsWithInfo()).thenReturn(List.of(row1, row2));
+
+        // when
+        List<ProductBestDto> result = productService.getTop5BestSellingProducts();
+
+        // then
+        assertEquals(2, result.size());
+        assertEquals("상품A", result.get(0).getName());
+        assertEquals(50, result.get(0).getSales());
+
+        assertEquals("상품B", result.get(1).getName());
+        assertEquals(40, result.get(1).getSales());
+    }
+
+    @Test
+    @DisplayName("성공: 판매량 0개인 경우 빈 리스트 반환")
+    void getTop5BestSellingProducts_empty() {
+        // given
+        when(orderProductRepository.findTop5SellingProductsWithInfo()).thenReturn(List.of());
+
+        // when
+        List<ProductBestDto> result = productService.getTop5BestSellingProducts();
+
+        // then
+        assertTrue(result.isEmpty());
+    }
+
 }
