@@ -3,6 +3,7 @@ package kr.hhplus.be.server.interfaces.product;
 import kr.hhplus.be.server.application.product.ProductFacade;
 import kr.hhplus.be.server.domain.product.Product;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -30,5 +31,12 @@ public class ProductController {
 
         // ProductResponse를 생성하여 반환
         return new ProductResponse(200, "요청이 정상적으로 처리되었습니다.", new ProductResponse.ProductData(productDtos));
+    }
+
+    @GetMapping("/api/v1/products/best")
+    public ResponseEntity<ProductBestResponse> getBestSellingProducts() { // 판매량 상위 5개 상품 조회
+        List<ProductBestDto> bestProducts = productFacade.getBestSellingProducts();
+        ProductBestResponse response = new ProductBestResponse(200, "요청이 정상적으로 처리되었습니다.", bestProducts);
+        return ResponseEntity.ok(response);
     }
 }

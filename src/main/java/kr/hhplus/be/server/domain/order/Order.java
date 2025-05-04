@@ -16,7 +16,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class Order {
+public class Order { // 주문
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

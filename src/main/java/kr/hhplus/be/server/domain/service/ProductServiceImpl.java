@@ -4,12 +4,15 @@ import kr.hhplus.be.server.domain.order.OrderProduct;
 import kr.hhplus.be.server.domain.product.Product;
 import kr.hhplus.be.server.domain.repository.OrderProductRepository;
 import kr.hhplus.be.server.domain.repository.ProductRepository;
+import kr.hhplus.be.server.interfaces.product.ProductBestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -56,4 +59,35 @@ public class ProductServiceImpl implements ProductService {
             productRepository.save(product);
         }
     }
+
+
+    @Override
+    public List<ProductBestDto> getTop5BestSellingProducts() { // 판매량 상위 5개 상품 조회
+        // DB에서 판매량 상위 5개 상품 정보 조회 (상품 ID, 이름, 가격, 재고, 판매량)
+        List<Object[]> rawData = orderProductRepository.findTop5SellingProductsWithInfo();
+
+        // DTO 리스트로 변환하여 반환
+        return toProductBestDtoList(rawData);
+    }
+
+    private List<ProductBestDto> toProductBestDtoList(List<Object[]> rawData) {
+        List<ProductBestDto> result = new ArrayList<>();
+
+        for (Object[] row : rawData) {
+            // 컬럼 순서대로 데이터 추출 및 형 변환
+            Long id = ((Number) row[0]).longValue();       // 상품 ID
+            String name = (String) row[1];                 // 상품 이름
+            Integer price = ((Number) row[2]).intValue();  // 상품 가격
+            Integer stock = ((Number) row[3]).intValue();  // 재고 수량
+            Integer sales = ((Number) row[4]).intValue();  // 판매량
+
+            // DTO 생성 및 결과 리스트에 추가
+            result.add(new ProductBestDto(id, name, price, sales, stock));
+        }
+
+        return result;
+    }
+
+
+
 }

@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Table(name = "order_product")
 @Getter
 @Setter
-public class OrderProduct {
+public class OrderProduct { // 주문상품
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
