@@ -51,7 +51,8 @@ dependencies {
 
 	// redis
 	testImplementation("com.redis:testcontainers-redis")
-	// implementation("org.springframework.boot:spring-boot-starter-data-redis")
+	// RedisTemplate, StringRedisTemplate, LettuceConnectionFactory 빈으로 등록
+	implementation("org.springframework.boot:spring-boot-starter-data-redis")
 }
 
 tasks.withType<Test> {

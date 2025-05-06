@@ -11,6 +11,12 @@ services:
       - MYSQL_DATABASE=hhplus
     volumes:
       - ./data/mysql/:/var/lib/mysql
+  redis: # Redis 서버 설정 (추가)
+    image: redis:7.2
+    container_name: redis-local
+    ports:
+      - "6379:6379" # Redis 기본 포트
+    restart: always # 컨테이너 꺼지면 자동 재시작
 
 networks:
   default:
