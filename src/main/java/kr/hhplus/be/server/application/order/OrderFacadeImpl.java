@@ -4,6 +4,7 @@ import kr.hhplus.be.server.domain.order.Order;
 import kr.hhplus.be.server.domain.service.CouponService;
 import kr.hhplus.be.server.domain.service.OrderService;
 import kr.hhplus.be.server.domain.service.ProductService;
+import kr.hhplus.be.server.infra.redis.RedisLockManager;
 import kr.hhplus.be.server.interfaces.order.OrderRequest;
 import kr.hhplus.be.server.interfaces.order.OrderResponse;
 import lombok.RequiredArgsConstructor;
@@ -22,25 +23,38 @@ public class OrderFacadeImpl implements OrderFacade {
     private final ProductService productService;
     private final CouponService couponService;
 
-    @Override // 파사드에서는 호출만 !!! (상품 재고 차감, 쿠폰 적용, 주문 생성) 서비스 조합
-    @Transactional // 주문 생성
+    private final OrderHandler orderHandler;
+    private final RedisLockManager redisLockManager;
+
+    @Override
     public OrderResponse createOrder(OrderRequest orderRequest) {
-        // 1. 주문된 상품의 재고 확인 및 차감
-        for (OrderRequest.OrderItem item : orderRequest.getOrderItems()) { // 한 사람의 주문에 포함된 여러 상품을 처리
-            productService.checkAndReduceStock(item.getProductId(), item.getQuantity()); // 재고 확인 및 차감
+        // 상품 단위로 Redis 락 키 생성 (예: lock:product:1)
+        List<String> lockKeys = orderRequest.getOrderItems().stream()
+                .map(item -> "lock:product:" + item.getProductId())
+                .toList();
+
+        // 1. 모든 상품에 대해 락 획득 시도 (하나라도 실패하면 전체 실패)
+        for (String key : lockKeys) {
+            if (!redisLockManager.lockWithRetry(key, 3000)) {
+                // 지금까지 잡은 락 모두 해제 후 실패 처리
+                lockKeys.forEach(redisLockManager::unlock);
+                throw new IllegalStateException("상품 재고에 대한 락 획득 실패: " + key);
+            }
         }
 
-        // 2. 쿠폰이 있을 경우, 쿠폰 검증 및 적용
-        if (orderRequest.getUserCouponId() != null) {
-            couponService.applyCoupon(orderRequest.getUserId(), orderRequest.getUserCouponId());  // 쿠폰 검증 및 적용
+        try {
+            // 2. 락을 전부 획득한 경우에만 트랜잭션 실행 (재고 차감, 쿠폰 적용, 주문 생성)
+            return orderHandler.createOrderWithTx(orderRequest);
+        } finally {
+            // 3. 트랜잭션 성공/실패와 관계없이 락은 반드시 해제 (역순 해제 권장)
+            for (int i = lockKeys.size() - 1; i >= 0; i--) {
+                redisLockManager.unlock(lockKeys.get(i));
+            }
         }
-
-        // 3. 최종 주문 생성
-        Long orderId = orderService.createOrder(orderRequest);  // 주문 생성
-
-        // 4. 응답 반환
-        return new OrderResponse(201, "주문이 정상적으로 처리되었습니다.", new OrderResponse.OrderData(orderId));
     }
+
+
+
 
     // 5분 내 미결제 주문을 취소하고, 쿠폰 및 재고를 복구
     @Transactional

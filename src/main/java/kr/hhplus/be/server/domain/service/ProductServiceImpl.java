@@ -27,8 +27,8 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.findAll();
     }
 
-    // @Transactional // 트랜잭션 안에서 비관적 락을 적용
-    @Transactional(propagation = Propagation.REQUIRES_NEW) // 새 트랜잭션을 새로 열어줌
+    // @Transactional(propagation = Propagation.REQUIRES_NEW) // 새 트랜잭션을 새로 열어줌, 실패한 상품만 따로 처리하고 싶을때
+    @Transactional  // 기본 전파 속성(REQUIRED), 트랜잭션 안에서 비관적 락을 적용
     @Override
     public void checkAndReduceStock(Long productId, Integer quantity) {
         // 1. 상품 조회 (비관적 락 적용)
