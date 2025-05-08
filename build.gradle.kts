@@ -53,6 +53,10 @@ dependencies {
 	testImplementation("com.redis:testcontainers-redis")
 	// RedisTemplate, StringRedisTemplate, LettuceConnectionFactory 빈으로 등록
 	implementation("org.springframework.boot:spring-boot-starter-data-redis")
+
+	// Lombok for test (test에서도 Slf4j 등 어노테이션을 사용 가능하게 함)
+	testCompileOnly("org.projectlombok:lombok")
+	testAnnotationProcessor("org.projectlombok:lombok")
 }
 
 tasks.withType<Test> {

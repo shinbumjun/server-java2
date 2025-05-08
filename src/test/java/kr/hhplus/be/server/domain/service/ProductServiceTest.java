@@ -85,4 +85,5 @@ public class ProductServiceTest {
         // 트랜잭션이 공유되면서 락 경합(lock contention)이 발생, 동시에 비관적 락을 요청하다가 죽음
         // -> 스레드마다 각각 별도의 트랜잭션을 시작
     }
+
 }

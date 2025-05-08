@@ -20,9 +20,11 @@ public class OrderHandler {
     @Transactional // 주문 생성
     public OrderResponse createOrderWithTx(OrderRequest orderRequest) {
         // 1. 주문된 상품의 재고 확인 및 차감
-        for (OrderRequest.OrderItem item : orderRequest.getOrderItems()) {
-            productService.checkAndReduceStock(item.getProductId(), item.getQuantity());
-        }
+//        for (OrderRequest.OrderItem item : orderRequest.getOrderItems()) {
+//            productService.checkAndReduceStock(item.getProductId(), item.getQuantity());
+//        }
+        // 1. 주문된 상품의 재고 확인 및 차감 (일괄 처리)
+        productService.checkAndReduceStock(orderRequest.getOrderItems());
 
         // 2. 쿠폰이 있을 경우, 쿠폰 검증 및 적용
         if (orderRequest.getUserCouponId() != null) {

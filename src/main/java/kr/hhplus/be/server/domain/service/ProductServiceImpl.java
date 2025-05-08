@@ -4,16 +4,21 @@ import kr.hhplus.be.server.domain.order.OrderProduct;
 import kr.hhplus.be.server.domain.product.Product;
 import kr.hhplus.be.server.domain.repository.OrderProductRepository;
 import kr.hhplus.be.server.domain.repository.ProductRepository;
+import kr.hhplus.be.server.interfaces.order.OrderRequest;
 import kr.hhplus.be.server.interfaces.product.ProductBestDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
@@ -35,6 +40,9 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findByIdForUpdate(productId)
                 .orElseThrow(() -> new IllegalStateException("상품을 찾을 수 없습니다."));
 
+        log.info("[{}] {} 상품 - 검증 전 재고: {}, 요청 수량: {}",
+                Thread.currentThread().getName(), product.getProductName(), product.getStock(), quantity);
+
         // 2. 재고 검증 및 차감
         product.validateStock(quantity);  // 재고 검증
         product.reduceStock(quantity);    // 재고 차감
@@ -42,6 +50,36 @@ public class ProductServiceImpl implements ProductService {
         // 3. 변경된 상품 상태 저장
         productRepository.saveAndFlush(product); // 변경된 내용 즉시 DB에 반영
     }
+
+    @Transactional  // 트랜잭션 내에서 비관적 락과 일괄 저장 처리
+    @Override
+    public void checkAndReduceStock(List<OrderRequest.OrderItem> items) {
+        Map<Long, Product> productMap = new HashMap<>();
+
+        // 1. 모든 상품 비관적 락 조회 + 재고 검증
+        for (OrderRequest.OrderItem item : items) {
+            Product product = productRepository.findByIdForUpdate(item.getProductId())
+                    .orElseThrow(() -> new IllegalStateException("상품을 찾을 수 없습니다."));
+
+            log.info("[{}] {} 상품 - 검증 전 재고: {}, 요청 수량: {}",
+                    Thread.currentThread().getName(), product.getProductName(), product.getStock(), item.getQuantity());
+
+            product.validateStock(item.getQuantity());
+            // productMap.put(product, item.getQuantity());
+            productMap.put(product.getId(), product);
+        }
+
+        // 2. 모든 상품 재고 차감
+        for (OrderRequest.OrderItem item : items) {
+            Product product = productMap.get(item.getProductId());
+            product.validateStock(item.getQuantity());
+            product.reduceStock(item.getQuantity());
+        }
+
+        // 3. 일괄 저장 (flush는 트랜잭션 커밋 시 자동)
+        productRepository.saveAll(productMap.values());
+    }
+
 
     // 재고 복구
     @Override

@@ -11,7 +11,7 @@ import java.time.Duration;
 public class RedisLockManagerImpl implements RedisLockManager {
 
     private final StringRedisTemplate redisTemplate; // Redis 문자열 기반 템플릿
-    private static final long LOCK_EXPIRE_MILLIS = 10000; // 락 유지 시간 (10초)
+    private static final long LOCK_EXPIRE_MILLIS = 5000; // 락 유지 시간 (5초)
 
     @Override
     public boolean lockWithRetry(String key, long timeoutMs) {

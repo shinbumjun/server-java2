@@ -106,4 +106,33 @@ class ProductServiceTest2 { // 단위 테스트
         assertTrue(result.isEmpty());
     }
 
+    @Test
+    @DisplayName("성공: 재고가 충분하면 차감됨")
+    void checkAndReduceStock_success() {
+        // given
+        Product product = new Product(1L, "상품A", "desc", 1000, 5, null, null); // 재고 5
+        when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(product));
+
+        // when
+        productService.checkAndReduceStock(1L, 3);
+
+        // then
+        assertEquals(2, product.getStock());
+        verify(productRepository).saveAndFlush(product);
+    }
+
+    @Test
+    @DisplayName("실패: 재고 부족하면 예외 발생")
+    void checkAndReduceStock_fail_whenStockTooLow() {
+        // given
+        Product product = new Product(1L, "상품A", "desc", 1000, 1, null, null); // 재고 1
+        when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(product));
+
+        // then
+        assertThrows(IllegalStateException.class, () -> {
+            productService.checkAndReduceStock(1L, 2); // 2개 주문 시도
+        });
+    }
+
+
 }
