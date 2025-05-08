@@ -3,6 +3,7 @@ package kr.hhplus.be.server.domain.integration;
 import kr.hhplus.be.server.application.order.OrderFacade;
 import kr.hhplus.be.server.domain.product.Product;
 import kr.hhplus.be.server.domain.repository.ProductRepository;
+import kr.hhplus.be.server.infra.redis.RedisLockManager;
 import kr.hhplus.be.server.interfaces.order.OrderRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
@@ -25,6 +26,9 @@ public class OrderRedisLockIntegrationTest {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private RedisLockManager redisLockManager; // Redis 기반 분산 락 관리자
 
     @Test
     @DisplayName("Redis 락 기반 동시 주문 테스트: 실패(사용자3)???, 성공(사용자1), 실패(사용자2)")
@@ -159,4 +163,38 @@ public class OrderRedisLockIntegrationTest {
         assertTrue(resultB.getStock() >= 0 && resultB.getStock() <= 3);
         assertTrue(resultC.getStock() >= 0 && resultC.getStock() <= 3);
     }
+
+    @Test
+    @DisplayName("Redis 락 획득 실패 테스트")
+    void testRedisLockAcquisitionFailure() throws InterruptedException {
+        String lockKey = "lock:product:999"; // 테스트용 상품 락
+
+        // 먼저 락을 잡고 해제하지 않음 (10초 유지)
+        boolean lockAcquired = redisLockManager.lockWithRetry(lockKey, 10000);
+        assertTrue(lockAcquired, "선점 락 획득 실패");
+
+        CountDownLatch latch = new CountDownLatch(1);
+
+        Thread competingThread = new Thread(() -> {
+            try {
+                log.info("다른 쓰레드 락 획득 시도 시작");
+                boolean result = redisLockManager.lockWithRetry(lockKey, 2000); // 짧은 타임아웃
+                if (!result) {
+                    log.info("다른 쓰레드 락 획득 실패 (기대한 동작)");
+                    throw new IllegalStateException("상품 재고에 대한 락 획득 실패: " + lockKey);
+                }
+            } finally {
+                latch.countDown();
+            }
+        });
+
+        competingThread.start();
+
+        // 기다렸다가 락 해제
+        latch.await();
+
+        // 테스트 종료 후 락 해제
+        redisLockManager.unlock(lockKey);
+    }
+
 }
