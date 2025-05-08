@@ -45,9 +45,9 @@ public class Order { // 주문
         for (OrderRequest.OrderItem item : orderItems) {
             Product product = productRepository.findById(item.getProductId())
                     .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
-            if (item.getQuantity() > product.getStock()) {
-                throw new IllegalArgumentException("상품의 재고가 부족합니다.");
-            }
+//            if (item.getQuantity() > product.getStock()) {
+//                throw new IllegalArgumentException("상품의 재고가 부족합니다.");
+//            }
         }
     }
 
