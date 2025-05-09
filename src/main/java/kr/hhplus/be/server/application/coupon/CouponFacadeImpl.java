@@ -46,7 +46,7 @@ public class CouponFacadeImpl implements CouponFacade {
 
         큐 선두 진입 로그는 제일 먼저 들어온 사람의 것일 수도 있고 아닐 수도 있음.
         하지만 "락 시도는 반드시 선두가 먼저" 하도록 보장됨
-        
+
         *핵심 흐름
         1. 줄을 선다 (큐 등록)
         2. 내 차례가 올 때까지 대기

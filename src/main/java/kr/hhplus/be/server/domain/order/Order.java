@@ -51,10 +51,13 @@ public class Order { // 주문
         }
     }
 
-    // 주문 상태 검증 (EXPIRED면 결제 불가 예외 발생)
+    // 주문 상태 검증 (EXPIRED, PAID면 결제 불가 예외 발생)
     public void validatePayable() {
         if ("EXPIRED".equals(this.status)) {
             throw new IllegalStateException("주문 상태가 EXPIRED입니다. 결제가 불가능합니다.");
+        }
+        if ("PAID".equals(this.status)) {
+            throw new IllegalStateException("이미 결제 완료된 주문입니다.");
         }
     }
 
