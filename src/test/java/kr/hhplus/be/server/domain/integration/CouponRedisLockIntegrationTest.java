@@ -146,4 +146,39 @@ public class CouponRedisLockIntegrationTest {
         assertThat(successCount).isEqualTo(COUPON_STOCK);
         assertThat(conflictCount).isEqualTo(threadCount - COUPON_STOCK);
     }
+
+    @Test
+    @DisplayName("락 획득 실패 시 쿠폰 발급되지 않음 / 큐는 통과했지만, 락은 잡지 못함")
+    void testCouponIssueFailsOnLockAcquisitionFailure() throws Exception {
+        // 쿠폰 재고는 1로 설정됨 (setup 메서드에서)
+        String lockKey = "lock:coupon:" + testCouponId;
+
+        // 1. 다른 곳에서 락 선점 (해제하지 않음)
+        Boolean acquired = redisTemplate.opsForValue().setIfAbsent(lockKey, "locked");
+        assertThat(acquired).isTrue();
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        CountDownLatch latch = new CountDownLatch(1);
+
+        Future<CouponResult> future = executor.submit(() -> {
+            try {
+                return couponFacade.issueCoupon(99L, testCouponId); // 99번 유저가 발급 시도
+            } catch (Exception e) {
+                log.warn("락 획득 실패로 쿠폰 발급 실패: {}", e.getMessage());
+                return null;
+            } finally {
+                latch.countDown();
+            }
+        });
+
+        latch.await();
+        CouponResult result = future.get();
+
+        // 2. 결과는 실패 (락 획득 실패로 인해 발급되지 않음)
+        assertThat(result).isNull();
+
+        // 락 정리
+        redisTemplate.delete(lockKey);
+    }
+
 }
