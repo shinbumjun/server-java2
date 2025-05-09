@@ -98,8 +98,8 @@ public class PointServiceImpl implements PointService {
         pointHistoryRepository.save(pointHistory);
 
         // 7. 주문 상태 변경 (결제 완료 처리)
-        order.setStatus("PAID");
-        orderRepository.save(order);
+        // order.setStatus("PAID");
+        // orderRepository.save(order);
 
         // 8. 결제 성공 시 응답 반환
         return new PointResult(order.getUserId(), point.getBalance(), true, "포인트 결제 완료");
