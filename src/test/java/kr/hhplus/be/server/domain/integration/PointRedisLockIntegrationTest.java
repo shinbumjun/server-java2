@@ -105,4 +105,55 @@ public class PointRedisLockIntegrationTest {
         log.info("성공한 결제 수: {}", successCount);
     }
 
+    @Test
+    @DisplayName("서로 다른 사용자 각각 포인트 결제 요청 → 모두 성공")
+    void testMultipleUsersIndependentPointPayment() throws InterruptedException, ExecutionException {
+        int userCount = 3;
+        ExecutorService executor = Executors.newFixedThreadPool(userCount);
+        List<Future<Boolean>> results = new ArrayList<>();
+
+        // 사용자별 주문 및 포인트 세팅
+        for (long userId = 100L; userId < 100L + userCount; userId++) {
+            Order order = new Order(
+                    userId,
+                    null,
+                    false,
+                    500,
+                    "NOT_PAID",
+                    LocalDateTime.now(),
+                    LocalDateTime.now()
+            );
+            orderRepository.save(order);
+
+            Point point = new Point(
+                    null,
+                    userId,
+                    1000,
+                    LocalDateTime.now(),
+                    LocalDateTime.now()
+            );
+            pointRepository.save(point);
+
+            Long orderId = order.getId();
+
+            results.add(executor.submit(() -> {
+                try {
+                    pointFacade.processPointPayment(orderId);
+                    return true;
+                } catch (Exception e) {
+                    return false;
+                }
+            }));
+        }
+
+        executor.shutdown();
+        Thread.sleep(5000);
+
+        for (Future<Boolean> result : results) {
+            assertThat(result.get()).isTrue(); // 전부 성공해야 함
+        }
+
+        log.info("모든 사용자 포인트 결제 성공");
+    }
+
 }
