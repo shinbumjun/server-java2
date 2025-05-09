@@ -6,13 +6,16 @@ import kr.hhplus.be.server.domain.repository.ProductRepository;
 import kr.hhplus.be.server.infra.redis.RedisLockManager;
 import kr.hhplus.be.server.interfaces.order.OrderRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.RedisTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -29,6 +32,21 @@ public class OrderRedisLockIntegrationTest {
 
     @Autowired
     private RedisLockManager redisLockManager; // Redis 기반 분산 락 관리자
+
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
+
+    @BeforeEach
+    void clearRedisState() {
+        // 큐 초기화
+        redisTemplate.delete("fair:order:queue");
+
+        // 필요시 락 키도 초기화
+        Set<String> keys = redisTemplate.keys("lock:*");
+        if (keys != null && !keys.isEmpty()) {
+            redisTemplate.delete(keys);
+        }
+    }
 
     @Test
     @DisplayName("Redis 락 기반 동시 주문 테스트: 실패(사용자3)???, 성공(사용자1), 실패(사용자2)")
