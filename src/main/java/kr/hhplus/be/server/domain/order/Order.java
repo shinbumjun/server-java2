@@ -68,4 +68,8 @@ public class Order { // 주문
         }
         this.status = "PAID";
     }
+
+    public void updateStatusToFail() {
+        this.status = "FAIL"; // 주문 취소
+    }
 }

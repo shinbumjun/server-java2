@@ -32,6 +32,14 @@ public class ProductServiceImpl implements ProductService { // 1
         return productRepository.findAll();
     }
 
+    @Override
+    @Transactional // ← 여기에 AOP 프록시가 붙음, 재고차감
+    public void reduceStockWithTx(List<OrderRequest.OrderItem> items) {
+        for (OrderRequest.OrderItem item : items) {
+            checkAndReduceStock(item.getProductId(), item.getQuantity()); // 유틸처럼 사용
+        }
+    }
+
     // @Transactional(propagation = Propagation.REQUIRES_NEW) // 새 트랜잭션을 새로 열어줌, 실패한 상품만 따로 처리하고 싶을때
     @Transactional  // 기본 전파 속성(REQUIRED), 트랜잭션 안에서 비관적 락을 적용
     @Override
@@ -51,34 +59,34 @@ public class ProductServiceImpl implements ProductService { // 1
         productRepository.saveAndFlush(product); // 변경된 내용 즉시 DB에 반영
     }
 
-    @Transactional  // 트랜잭션 내에서 비관적 락과 일괄 저장 처리
-    @Override
-    public void checkAndReduceStock(List<OrderRequest.OrderItem> items) {
-        Map<Long, Product> productMap = new HashMap<>();
-
-        // 1. 모든 상품 비관적 락 조회 + 재고 검증
-        for (OrderRequest.OrderItem item : items) {
-            Product product = productRepository.findByIdForUpdate(item.getProductId())
-                    .orElseThrow(() -> new IllegalStateException("상품을 찾을 수 없습니다."));
-
-            log.info("[{}] {} 상품 - 검증 전 재고: {}, 요청 수량: {}",
-                    Thread.currentThread().getName(), product.getProductName(), product.getStock(), item.getQuantity());
-
-            product.validateStock(item.getQuantity());
-            // productMap.put(product, item.getQuantity());
-            productMap.put(product.getId(), product);
-        }
-
-        // 2. 모든 상품 재고 차감
-        for (OrderRequest.OrderItem item : items) {
-            Product product = productMap.get(item.getProductId());
-            product.validateStock(item.getQuantity());
-            product.reduceStock(item.getQuantity());
-        }
-
-        // 3. 일괄 저장 (flush는 트랜잭션 커밋 시 자동)
-        productRepository.saveAll(productMap.values());
-    }
+//    @Transactional  // 트랜잭션 내에서 비관적 락과 일괄 저장 처리
+//    @Override
+//    public void checkAndReduceStock(List<OrderRequest.OrderItem> items) {
+//        Map<Long, Product> productMap = new HashMap<>();
+//
+//        // 1. 모든 상품 비관적 락 조회 + 재고 검증
+//        for (OrderRequest.OrderItem item : items) {
+//            Product product = productRepository.findByIdForUpdate(item.getProductId())
+//                    .orElseThrow(() -> new IllegalStateException("상품을 찾을 수 없습니다."));
+//
+//            log.info("[{}] {} 상품 - 검증 전 재고: {}, 요청 수량: {}",
+//                    Thread.currentThread().getName(), product.getProductName(), product.getStock(), item.getQuantity());
+//
+//            product.validateStock(item.getQuantity());
+//            // productMap.put(product, item.getQuantity());
+//            productMap.put(product.getId(), product);
+//        }
+//
+//        // 2. 모든 상품 재고 차감
+//        for (OrderRequest.OrderItem item : items) {
+//            Product product = productMap.get(item.getProductId());
+//            product.validateStock(item.getQuantity());
+//            product.reduceStock(item.getQuantity());
+//        }
+//
+//        // 3. 일괄 저장 (flush는 트랜잭션 커밋 시 자동)
+//        productRepository.saveAll(productMap.values());
+//    }
 
 
     // 재고 복구

@@ -75,6 +75,13 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다. orderId=" + orderId));
     }
 
+    @Override
+    public void updateOrderStatusToFail(Long orderId) { // 실패 시 상태 FAIL
+        Order order = getOrderById(orderId);
+        order.updateStatusToFail(); // 상태 변경 메서드는 엔티티에서 정의
+        orderRepository.save(order);
+    }
+
     @Override // 주문 상태 변경: 결제 성공시 상태를 PAID로 업데이트
     public void updateOrderStatusToPaid(Long orderId) {
         Order order = getOrderById(orderId); // 주문 가져오기

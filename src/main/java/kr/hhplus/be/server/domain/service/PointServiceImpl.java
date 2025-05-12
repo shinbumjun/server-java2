@@ -97,7 +97,7 @@ public class PointServiceImpl implements PointService {
         pointHistory.setType("사용");
         pointHistoryRepository.save(pointHistory);
 
-        // 7. 주문 상태 변경 (결제 완료 처리)
+        // 7. 주문 상태 변경 (결제 완료 처리) -> 포인트가 주문을 직접 수정하는 것 안되고 포인트핸들러가
         // order.setStatus("PAID");
         // orderRepository.save(order);
 

@@ -19,4 +19,6 @@ public interface OrderService {
 
     // 주문 조회
     Order getOrderById(Long orderId);
+
+    void updateOrderStatusToFail(Long orderId); // 실패 시 상태 FAIL
 }
