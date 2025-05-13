@@ -82,6 +82,12 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
     }
 
+    @Override
+    public void validatePayableOrder(Long orderId) {
+        Order order = getOrderById(orderId); // 기존에 존재하는 조회 메서드 재사용
+        order.validatePayable(); // 도메인 엔티티가 상태 검증 수행 (EXPIRED, PAID 검사)
+    }
+
     @Override // 주문 상태 변경: 결제 성공시 상태를 PAID로 업데이트
     public void updateOrderStatusToPaid(Long orderId) {
         Order order = getOrderById(orderId); // 주문 가져오기

@@ -21,4 +21,6 @@ public interface OrderService {
     Order getOrderById(Long orderId);
 
     void updateOrderStatusToFail(Long orderId); // 실패 시 상태 FAIL
+
+    void validatePayableOrder(Long orderId); // 주문 상태 검증 (EXPIRED, PAID 예외)
 }

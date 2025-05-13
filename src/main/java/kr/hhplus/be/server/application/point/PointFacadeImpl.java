@@ -56,8 +56,14 @@ public class PointFacadeImpl implements PointFacade {
         }
 
         try {
-            // 실질적 포인트 처리 로직은 트랜잭션이 적용된 핸들러에 위임
-            pointHandler.processPointPaymentTx(orderId);
+            // 트랜잭션은 service에서만 수행 → AOP 분리 유지
+            // 관리자 포인트 차감이 추가되면 둘 다 PointService.usePoints(userId, amount) 재사용해야 하기 때문에 수정
+
+            // 파사드는 흐름만 조립
+            orderService.validatePayableOrder(orderId);  // 주문 상태 검증 (EXPIRED, PAID 예외)
+            int amount = orderService.getOrderById(orderId).getTotalAmount(); // 결제 금액 조회
+            pointService.usePoints(userId, amount);  // 포인트 차감 및 내역 저장 (재사용 가능)
+            orderService.updateOrderStatusToPaid(orderId);  // 주문 상태를 PAID로 변경
         } finally {
             redisLockManager.unlock(lockKey);
         }
