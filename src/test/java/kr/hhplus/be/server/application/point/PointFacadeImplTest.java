@@ -58,7 +58,7 @@ class PointFacadeImplTest {
         Order order = orderRepository.save(new Order(1L, null, false, 20000, "NOT_PAID", now(), now()));
 
         // when
-        PointResult result = pointService.usePoints(order.getId());
+        PointResult result = pointService.usePoints(order.getId(), order.getTotalAmount());
 
         // then
         assertFalse(result.isSuccess());
@@ -75,7 +75,7 @@ class PointFacadeImplTest {
         Order order = orderRepository.save(new Order(1L, null, false, 20000, "EXPIRED", now(), now()));
 
         // when
-        PointResult result = pointService.usePoints(order.getId());
+        PointResult result = pointService.usePoints(order.getId(), order.getTotalAmount());
 
         // then
         assertFalse(result.isSuccess());

@@ -64,7 +64,6 @@ public class PointController {
     @PostMapping("/use")
     public ResponseEntity<Void> usePointsForPayment(@RequestBody PointPaymentRequest request) {
         pointFacade.processPointPayment(request.getOrderId()); // 포인트 결제 처리
-        orderService.updateOrderStatusToPaid(request.getOrderId()); // 주문 상태 변경: 결제 성공시 상태를 PAID로 업데이트
         return ResponseEntity.noContent().build(); // 204 No Content
     }
 }

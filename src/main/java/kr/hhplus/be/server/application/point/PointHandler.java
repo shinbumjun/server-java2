@@ -28,7 +28,7 @@ public class PointHandler {
         order.validatePayable(); // 도메인에 정의되어 있어야 함
 
         // 3. 사용자 포인트 차감 처리
-        pointService.usePoints(orderId);
+        pointService.usePoints(order.getUserId(), order.getTotalAmount()); // 필요한 정보만 넘김
 
         // 4. 결제 성공
         orderService.updateOrderStatusToPaid(orderId);

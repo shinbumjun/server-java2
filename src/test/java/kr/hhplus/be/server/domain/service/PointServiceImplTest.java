@@ -135,7 +135,7 @@ class PointServiceImplTest {
         PointService pointService = new PointServiceImpl(mockPointRepository, mockOrderRepository, mockPointHistoryRepository);
 
         // When: 포인트 결제
-        PointResult result = pointService.usePoints(1L);
+        PointResult result = pointService.usePoints(1L, 5000);
 
         // Then: 결제 성공 시
         assertEquals(200, result.getCode());  // 성공 코드 200
@@ -157,7 +157,7 @@ class PointServiceImplTest {
 
         // When: 포인트 결제 (잔
         // 액 부족)
-        PointResult result = pointService.usePoints(1L);
+        PointResult result = pointService.usePoints(1L, 5000);
 
         // Then: 결제 실패 시 (잔액 부족)
         assertEquals(409, result.getCode());  // 오류 코드 409
@@ -179,7 +179,7 @@ class PointServiceImplTest {
         PointService pointService = new PointServiceImpl(mockPointRepository, mockOrderRepository, mockPointHistoryRepository);
 
         // When: 포인트 결제 (주문 상태 EXPIRED)
-        PointResult result = pointService.usePoints(1L);
+        PointResult result = pointService.usePoints(1L, 5000);
 
         // Then: 주문 상태가 EXPIRED인 경우
         assertEquals(409, result.getCode());  // 오류 코드 409
@@ -203,7 +203,7 @@ class PointServiceImplTest {
         when(mockPointRepository.findByUserId(1L)).thenReturn(point);
 
         PointService pointService = new PointServiceImpl(mockPointRepository, mockOrderRepository, mockPointHistoryRepository);
-        PointResult result = pointService.usePoints(orderId);
+        PointResult result = pointService.usePoints(orderId, order.getTotalAmount());
 
         assertTrue(result.isSuccess());
         assertEquals(10000, result.getBalance());
@@ -231,7 +231,7 @@ class PointServiceImplTest {
         PointService pointService = new PointServiceImpl(mockPointRepository, mockOrderRepository, mockPointHistoryRepository);
 
         // when
-        PointResult result = pointService.usePoints(orderId);
+        PointResult result = pointService.usePoints(orderId, order.getTotalAmount());
 
         // then
         assertFalse(result.isSuccess());
