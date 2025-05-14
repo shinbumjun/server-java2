@@ -6,10 +6,12 @@ import kr.hhplus.be.server.domain.service.ProductService;
 import kr.hhplus.be.server.infra.redis.CacheService;
 import kr.hhplus.be.server.interfaces.product.ProductBestDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor // 생성자 자동 생성
 public class ProductFacadeImpl implements ProductFacade {
@@ -30,11 +32,13 @@ public class ProductFacadeImpl implements ProductFacade {
         // 1. Redis에서 먼저 캐시 조회
         List<ProductBestDto> cached = cacheService.get(BEST_PRODUCT_KEY, new TypeReference<>() {});
         if (cached != null) {
+            log.info("[CACHE HIT] Redis 캐시에서 인기 상품을 조회했습니다.");
             return cached; // 캐시 히트
         }
 
         // 2. 캐시에 없으면 DB에서 조회
         List<ProductBestDto> bestProducts = productService.getTop5BestSellingProducts();
+        log.info("[CACHE MISS] DB에서 인기 상품을 조회하고 Redis에 저장합니다.");
 
         // 3. 다시 Redis에 저장 (fallback 캐싱)
         cacheService.set(BEST_PRODUCT_KEY, bestProducts, TTL_SECONDS);
