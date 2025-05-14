@@ -1,5 +1,6 @@
-package kr.hhplus.be.server.application.scheduler;
+package kr.hhplus.be.server.domain.integration.scheduler;
 
+import kr.hhplus.be.server.application.scheduler.OrderExpireScheduler;
 import kr.hhplus.be.server.domain.coupon.UserCoupon;
 import kr.hhplus.be.server.domain.order.Order;
 import kr.hhplus.be.server.domain.order.OrderProduct;
