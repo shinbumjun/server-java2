@@ -93,7 +93,7 @@ public class ProductServiceImpl implements ProductService { // 1
     @Override
     public void revertStockByOrder(Long orderId) {
         // 재고 복구 처리
-        List<OrderProduct> orderProducts = orderProductRepository.findByOrdersId(orderId);
+        List<OrderProduct> orderProducts = orderProductRepository.findByOrdersId(orderId); // 해당 주문에 속한 모든 상품 항목
 
         for (OrderProduct op : orderProducts) {
             Product product = productRepository.findById(op.getProductId())
