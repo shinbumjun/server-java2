@@ -103,6 +103,7 @@ public class ProductServiceImpl implements ProductService { // 1
             product.increaseStock(op.getQuantity());
             // 재고 복구 저장
             productRepository.save(product);
+            log.info("✅ 재고 복구 - productId: {}, 복구 수량: {}, 복구 후 재고: {}", product.getId(), op.getQuantity(), product.getStock());
         }
     }
 

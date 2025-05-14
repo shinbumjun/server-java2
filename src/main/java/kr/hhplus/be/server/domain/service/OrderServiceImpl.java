@@ -10,6 +10,7 @@ import kr.hhplus.be.server.domain.repository.ProductRepository;
 import kr.hhplus.be.server.domain.repository.UserCouponRepository;
 import kr.hhplus.be.server.interfaces.order.OrderRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor // 생성자 자동 생성
 public class OrderServiceImpl implements OrderService {
@@ -59,7 +61,9 @@ public class OrderServiceImpl implements OrderService {
     // 5분 이상 결제 안 된 주문 조회
     @Override
     public List<Order> getUnpaidOrdersBefore(LocalDateTime time) {
-        return orderRepository.findByStatusAndCreatedAtBefore("NOT_PAID", time); // 결제 대기 상태의 주문 조회
+        List<Order> orders = orderRepository.findByStatusAndCreatedAtBefore("NOT_PAID", time); // 결제 대기 상태의 주문 조회
+        log.info("[조회] 미결제 주문 수: {}, 기준 시각: {}", orders.size(), time);
+        return orders;
     }
 
     // 주문 상태를 EXPIRED로 변경
@@ -67,6 +71,7 @@ public class OrderServiceImpl implements OrderService {
     public void expireOrder(Order order) {
         order.setStatus("EXPIRED"); // 주문 상태를 EXPIRED로 변경
         orderRepository.save(order); // 상태 업데이트
+        log.info("주문 상태 변경 → EXPIRED 처리 완료 - UserId: {}", order.getUserId());
     }
 
     @Override // 주문 조회

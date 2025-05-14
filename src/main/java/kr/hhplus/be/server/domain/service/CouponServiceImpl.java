@@ -8,11 +8,13 @@ import kr.hhplus.be.server.domain.repository.CouponRepository;
 import kr.hhplus.be.server.domain.repository.UserCouponRepository;
 import kr.hhplus.be.server.interfaces.coupon.CouponResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor // 생성자 자동 생성
 public class CouponServiceImpl implements CouponService {
@@ -94,6 +96,9 @@ public class CouponServiceImpl implements CouponService {
         if (userCoupon != null && Boolean.TRUE.equals(userCoupon.getIsUsed())) { // 쿠폰이 실제로 사용된 경우에만 사용 취소
             userCoupon.setIsUsed(false);
             userCouponRepository.save(userCoupon);
+            log.info("✅ 쿠폰 복구 완료 - couponId: {}", userCoupon.getCouponId());
+        } else {
+            log.info("❌ 쿠폰이 사용되지 않았거나 이미 복구된 상태입니다. couponId: {}", userCoupon.getCouponId());
         }
     }
 
