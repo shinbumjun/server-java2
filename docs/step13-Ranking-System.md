@@ -1,53 +1,31 @@
-🔩 STEP13 - Redis 기반 실시간 상품 랭킹 시스템
+# STEP13 - Redis 실시간 상품 랭킹 시스템
 
-✅ 구현 목표
+## 목표
+- 최근 3일간 가장 많이 팔린 상품 TOP 5 조회 API 구현
+- Redis ZSet + ZINCRBY + ZUNIONSTORE 활용
 
-최근 3일간 가장 많이 팔림 상품을 실시간으로 조회하는 랭킹 API 제공
+## 구성 요약
 
-Redis의 Sorted Set (ZSet) 구조와 ZINCRBY, ZUNIONSTORE 명령을 활용
+### 1. 판매 집계
+- 결제 완료(PAID) 시 상품별 수량 → Redis ZSet(`ranking:daily:yyyyMMdd`)에 `ZINCRBY`
 
-🏗️ 시스템 구성
+### 2. TTL 관리
+- 일별 키에 TTL 4일 설정 → 3일 데이터 유지
 
-1. 주문 성공 시 랭킹 누적
+### 3. 자정 병합
+- 매일 00:00 `@Scheduled`
+- 최근 3일치 키를 `ZUNIONSTORE`로 `ranking:3days`에 병합
 
-결제 완료(PAID)된 주문에 한해 OrderProduct에서 상품 ID, 수량 조회
+### 4. 랭킹 조회 API
+- `/api/v1/products/ranking`
+- Redis `ranking:3days`에서 TOP 5 조회 → DB로 상세 정보 조회 후 응답
 
-Redis ZSet에 ZINCRBY 사용하여 해당 상품 판매 수량 누적
+## 기술 포인트
+- ZSet 기반 점수 정렬
+- Redis 캐시로 실시간 응답 속도 향상
+- TTL + 스케줄러로 정확성 유지
 
-redisTemplate.opsForZSet().incrementScore("ranking:daily:yyyyMMdd", productId, quantity);
-
-2. 일일 누적 TTL 관리
-
-ranking:daily:yyyyMMdd 키에 TTL 4일 설정 → 정확성 + 3일 총계 유지 목적
-
-3. 자정 스케줄러로 3일 랭킹 병합
-
-@Scheduled(cron = "0 0 0 * * *")
-
-3일간의 ZSet 키를 ZUNIONSTORE로 병합하여 ranking:3days에 저장
-
-unionAndStore(d1, [d2, d3], "ranking:3days")
-
-4. 실시간 랭킹 API 구현
-
-/api/v1/products/ranking
-
-RedisTemplate으로 ranking:3days ZSet에서 TOP 5 추출
-
-추출된 상품 ID를 기반으로 DB에서 상품 상세 조회 후 응답
-
-🧠 기술 포인트
-
-ZSet의 정렬 특성을 활용한 점수 기반 실시간 정렬
-
-DB → Redis 총계 → 캐시 조회의 흉년 완성
-
-TTL과 스케줄리를 통해 정확성과 실시간성 관리
-
-🧪 검증 사항
-
-주문 → 결제 → Redis 총계 누적 동작 확인
-
-자정만분 3일치 랭킹 자동 병합됨 확인
-
-API 호출 시 Redis 캐시만을 조회해 빠른 응답 확인
+## 테스트 체크
+- 결제 성공 → Redis 누적 확인
+- 자정 병합 → `ranking:3days` 갱신 확인
+- API 응답 → Redis 기반으로 빠르게 반환
