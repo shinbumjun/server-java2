@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -17,4 +18,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)  // 비관적 락 적용
     @Query("SELECT p FROM Product p WHERE p.id = :productId")
     Optional<Product> findByIdForUpdate(@Param("productId") Long productId);
+
+    // 상품 ID 리스트로 상품 조회
+    List<Product> findByIdIn(List<Long> productIds);
 }

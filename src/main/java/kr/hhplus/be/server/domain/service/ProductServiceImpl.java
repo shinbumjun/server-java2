@@ -40,6 +40,11 @@ public class ProductServiceImpl implements ProductService { // 1
         }
     }
 
+    @Override // Redis 랭킹 상품 ID 목록으로 상품 정보 조회
+    public List<Product> getProductsByIds(List<Long> productIds) {
+        return productRepository.findByIdIn(productIds);
+    }
+
     // @Transactional(propagation = Propagation.REQUIRES_NEW) // 새 트랜잭션을 새로 열어줌, 실패한 상품만 따로 처리하고 싶을때
     @Transactional  // 기본 전파 속성(REQUIRED), 트랜잭션 안에서 비관적 락을 적용
     @Override

@@ -16,4 +16,6 @@ public interface ProductService {
     List<ProductBestDto> getTop5BestSellingProducts(); // 판매량 상위 5개 상품 조회
 
     void reduceStockWithTx(List<OrderRequest.OrderItem> orderItems); // 주문된 상품의 재고 확인 및 차감 (일괄 처리)
+
+    List<Product> getProductsByIds(List<Long> productIds);
 }

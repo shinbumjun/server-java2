@@ -7,9 +7,12 @@ import kr.hhplus.be.server.infra.redis.CacheService;
 import kr.hhplus.be.server.interfaces.product.ProductBestDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -18,6 +21,8 @@ public class ProductFacadeImpl implements ProductFacade {
 
     private final ProductService productService;
     private final CacheService cacheService;
+
+    private final RedisTemplate redisTemplate;
 
     private static final String BEST_PRODUCT_KEY = "best:daily";
     private static final long TTL_SECONDS = 60 * 60 * 25; // 25시간
@@ -47,7 +52,37 @@ public class ProductFacadeImpl implements ProductFacade {
     }
 
     @Override
-    public List<ProductBestDto> getRealTimeRankings() { // Redis 기반 랭킹 조회
-        return null;
+    public List<ProductBestDto> getRealTimeRankings() {
+        // 1. Redis에서 정렬된 랭킹 TOP 5 조회 (상품 ID + 판매량)
+        Set<ZSetOperations.TypedTuple<String>> topRanks =
+                redisTemplate.opsForZSet().reverseRangeWithScores("ranking:3days", 0, 4);
+
+        // 2. 상품 ID만 뽑아서 DB에서 상품 상세 정보 조회
+        List<Long> productIds = topRanks.stream()
+                .map(t -> Long.valueOf(t.getValue()))
+                .toList();
+
+        List<Product> products = productService.getProductsByIds(productIds);
+
+        // 3. 상품 정보 + 판매량(score)을 묶어서 응답용 DTO로 변환
+        return products.stream()
+                .map(p -> {
+                    double score = topRanks.stream()
+                            .filter(t -> t.getValue().equals(p.getId().toString()))
+                            .findFirst()
+                            .map(ZSetOperations.TypedTuple::getScore)
+                            .orElse(0.0);
+
+                    return new ProductBestDto(
+                            p.getId(),
+                            p.getProductName(),
+                            p.getPrice(),
+                            (int) score,     // 판매량
+                            p.getStock()
+                    );
+                })
+                .toList();
     }
+
+
 }
