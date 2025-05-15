@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.infra.redis;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -9,6 +10,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RedisRankingServiceImpl implements RedisRankingService {
@@ -24,6 +26,8 @@ public class RedisRankingServiceImpl implements RedisRankingService {
         String key = getTodayRankingKey(); // 예: ranking:daily:20240515
         redisTemplate.opsForZSet().incrementScore(key, productId.toString(), quantity); // 누적
         redisTemplate.expire(key, DAILY_TTL); // TTL 설정
+
+        log.info("[Redis 랭킹 집계] key={}, productId={}, quantity={}, TTL={}일", key, productId, quantity, DAILY_TTL.toDays());
     }
 
     @Override // 집합 계열 : ZUNIONSTORE

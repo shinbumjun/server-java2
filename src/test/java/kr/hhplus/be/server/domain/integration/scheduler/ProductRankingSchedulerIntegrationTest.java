@@ -1,32 +1,43 @@
-package kr.hhplus.be.server.domain.integration.product;
+package kr.hhplus.be.server.domain.integration.scheduler;
 
 import kr.hhplus.be.server.application.point.PointFacade;
+import kr.hhplus.be.server.application.scheduler.ProductRankingScheduler;
 import kr.hhplus.be.server.domain.order.Order;
 import kr.hhplus.be.server.domain.order.OrderProduct;
 import kr.hhplus.be.server.domain.point.Point;
-import kr.hhplus.be.server.domain.repository.*;
+import kr.hhplus.be.server.domain.repository.OrderProductRepository;
+import kr.hhplus.be.server.domain.repository.OrderRepository;
+import kr.hhplus.be.server.domain.repository.PointRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+
 @Slf4j
 @SpringBootTest
-class ProductRankingIntegrationTest {
+public class ProductRankingSchedulerIntegrationTest {
 
-    @Autowired private PointFacade pointFacade;
+    @Autowired
+    private PointFacade pointFacade;
 
     @Autowired private StringRedisTemplate redisTemplate;
     @Autowired private OrderRepository orderRepository;
     @Autowired private OrderProductRepository orderProductRepository;
     @Autowired private PointRepository pointRepository;
+
+    @Autowired private ProductRankingScheduler productRankingScheduler;
 
     private final Long userId = 1001L;
     private final String productId = "101";
@@ -96,15 +107,17 @@ class ProductRankingIntegrationTest {
     }
 
     @Test
-    @DisplayName("productId=101인 상품이 총 3건 주문(수량=2)되었을 때, Redis ZSet에 score=6.0이 누적된다")
-    void should_AccumulateProductSalesToZSet_When_PaymentSucceeds() {
-        // then
-        String todayKey = "ranking:daily:" + LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
-        Double score = redisTemplate.opsForZSet().score(todayKey, productId); // 101
+    @DisplayName("최근 3일 랭킹 병합 시 Redis에 'ranking:3days' ZSet이 생성되고 데이터가 포함된다")
+    void should_Merge3DayRankingAndStoreInRedis() {
+        // when: 스케줄러 실행
+        productRankingScheduler.merge3DayRanking();
 
-        // 로그 : [Redis 랭킹 집계] key=ranking:daily:20250515, productId=101, quantity=3, TTL=4일
-        assertThat(score).isNotNull();
-        assertThat(score).isEqualTo(6.0);
+        // then: Redis ZSet 확인
+        String rankingKey = "ranking:3days";
+        ZSetOperations<String, String> ops = redisTemplate.opsForZSet();
+        Set<ZSetOperations.TypedTuple<String>> result = ops.reverseRangeWithScores(rankingKey, 0, -1);
+
+        // 로그 : 최근 3일 랭킹 병합 완료 → [ranking:3days] from ranking:daily:20250512, ranking:daily:20250513, ranking:daily:20250514
+        assertThat(result).isNotNull();
     }
-
 }

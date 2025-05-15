@@ -13,11 +13,13 @@ import kr.hhplus.be.server.infra.lock.FairLockManager;
 import kr.hhplus.be.server.infra.redis.RedisLockManager;
 import kr.hhplus.be.server.infra.redis.RedisRankingService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor // 생성자 자동 생성
 public class PointFacadeImpl implements PointFacade {
@@ -74,6 +76,7 @@ public class PointFacadeImpl implements PointFacade {
             // Redis ZSet에 오늘 랭킹 집계 누적, 캐시 vs DB(작고 짧은 쿼리)
             List<OrderProduct> products = orderService.getOrderProductsByOrderId(orderId);
             for (OrderProduct op : products) {
+                log.info("[주문ID {}] 상품ID={} 수량={} → Redis ZSet 집계 시작", orderId, op.getProductId(), op.getQuantity());
                 redisRankingService.incrementDailyProductRanking(op.getProductId(), op.getQuantity());
             }
 
