@@ -93,6 +93,11 @@ public class OrderServiceImpl implements OrderService {
         order.validatePayable(); // 도메인 엔티티가 상태 검증 수행 (EXPIRED, PAID 검사)
     }
 
+    @Override // Redis ZSet에 오늘 랭킹 집계 누적
+    public List<OrderProduct> getOrderProductsByOrderId(Long orderId) {
+        return orderProductRepository.findByOrdersId(orderId);
+    }
+
     @Override // 주문 상태 변경: 결제 성공시 상태를 PAID로 업데이트
     public void updateOrderStatusToPaid(Long orderId) {
         Order order = getOrderById(orderId); // 주문 가져오기

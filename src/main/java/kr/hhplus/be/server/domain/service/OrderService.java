@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.domain.service;
 
 import kr.hhplus.be.server.domain.order.Order;
+import kr.hhplus.be.server.domain.order.OrderProduct;
 import kr.hhplus.be.server.interfaces.order.OrderRequest;
 
 import java.time.LocalDateTime;
@@ -23,4 +24,6 @@ public interface OrderService {
     void updateOrderStatusToFail(Long orderId); // 실패 시 상태 FAIL
 
     void validatePayableOrder(Long orderId); // 주문 상태 검증 (EXPIRED, PAID 예외)
+
+    List<OrderProduct> getOrderProductsByOrderId(Long orderId);
 }

@@ -3,6 +3,7 @@ package kr.hhplus.be.server.application.point;
 import kr.hhplus.be.server.application.order.OrderHandler;
 import kr.hhplus.be.server.common.exception.PointErrorCode;
 import kr.hhplus.be.server.domain.order.Order;
+import kr.hhplus.be.server.domain.order.OrderProduct;
 import kr.hhplus.be.server.domain.service.CouponService;
 import kr.hhplus.be.server.domain.service.OrderService;
 import kr.hhplus.be.server.domain.service.PointService;
@@ -10,9 +11,12 @@ import kr.hhplus.be.server.domain.service.ProductService;
 import kr.hhplus.be.server.common.exception.CustomBusinessException;
 import kr.hhplus.be.server.infra.lock.FairLockManager;
 import kr.hhplus.be.server.infra.redis.RedisLockManager;
+import kr.hhplus.be.server.infra.redis.RedisRankingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor // 생성자 자동 생성
@@ -31,6 +35,8 @@ public class PointFacadeImpl implements PointFacade {
 
     private final RedisLockManager redisLockManager; // Redis 기반 분산 락 관리자
     private final FairLockManager fairLockManager;   // 사용자 순서 보장용 Fair Lock 큐 관리자
+
+    private final RedisRankingService redisRankingService;
 
     @Override
     public PointResult chargePoints(PointCriteria criteria) { // 사용자 ID, 충전금액
@@ -64,6 +70,13 @@ public class PointFacadeImpl implements PointFacade {
             int amount = orderService.getOrderById(orderId).getTotalAmount(); // 결제 금액 조회
             pointService.usePoints(userId, amount);  // 포인트 차감 및 내역 저장 (재사용 가능)
             orderService.updateOrderStatusToPaid(orderId);  // 주문 상태를 PAID로 변경
+
+            // Redis ZSet에 오늘 랭킹 집계 누적, 캐시 vs DB(작고 짧은 쿼리)
+            List<OrderProduct> products = orderService.getOrderProductsByOrderId(orderId);
+            for (OrderProduct op : products) {
+                redisRankingService.incrementDailyProductRanking(op.getProductId(), op.getQuantity());
+            }
+
         } finally {
             redisLockManager.unlock(lockKey);
         }
