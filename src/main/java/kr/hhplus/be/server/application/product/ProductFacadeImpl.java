@@ -45,4 +45,9 @@ public class ProductFacadeImpl implements ProductFacade {
 
         return bestProducts;
     }
+
+    @Override
+    public List<ProductBestDto> getRealTimeRankings() { // Redis 기반 랭킹 조회
+        return null;
+    }
 }

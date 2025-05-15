@@ -16,7 +16,8 @@ public class RedisRankingServiceImpl implements RedisRankingService {
     private final StringRedisTemplate redisTemplate;
 
     private static final String DAILY_RANKING_KEY_PREFIX = "ranking:daily:";
-    private static final Duration DAILY_TTL = Duration.ofDays(4); // TTL : 최소 3일 + 여유 1일
+    // TTL: 3일 + 병합 작업이 끝날 때까지 보존 여유 1일 (총 4일)
+    private static final Duration DAILY_TTL = Duration.ofDays(4);
 
     @Override // Sorted Set : ZSet(정렬된 집합)에 날짜(key) + 상품ID(member) 기준으로 수량(score)을 누적
     public void incrementDailyProductRanking(Long productId, int quantity) {

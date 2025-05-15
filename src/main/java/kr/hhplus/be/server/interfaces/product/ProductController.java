@@ -39,4 +39,11 @@ public class ProductController {
         ProductBestResponse response = new ProductBestResponse(200, "요청이 정상적으로 처리되었습니다.", bestProducts);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/api/v1/products/ranking")
+    public ResponseEntity<ProductBestResponse> getRealTimeRanking() {
+        List<ProductBestDto> rankedProducts = productFacade.getRealTimeRankings(); // Redis 기반 랭킹 조회
+        ProductBestResponse response = new ProductBestResponse(200, "실시간 랭킹 조회 성공", rankedProducts);
+        return ResponseEntity.ok(response);
+    }
 }

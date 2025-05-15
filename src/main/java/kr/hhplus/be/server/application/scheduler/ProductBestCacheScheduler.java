@@ -13,7 +13,7 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ProductBestCacheScheduler {
+public class ProductBestCacheScheduler { // best:daily → DB 기반 캐시 (전통적인 방식)
     // 매일 자정마다 인기 상품 데이터를 Redis에 저장
     private final ProductService productService;
     private final CacheService cacheService;
