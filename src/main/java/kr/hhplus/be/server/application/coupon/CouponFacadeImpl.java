@@ -10,9 +10,11 @@ import kr.hhplus.be.server.interfaces.coupon.CouponResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 
 @Slf4j
@@ -89,6 +91,7 @@ public class CouponFacadeImpl implements CouponFacade {
 
             // 3. 선착순 재고 초과 제어: Redis Set 크기 > 쿠폰 재고면 차단
             Long totalIssued = redisTemplate.opsForSet().size(issuedSetKey);
+
             Coupon coupon = couponService.findCouponOrThrow(couponId);  // 재고 조회용 메서드 추가 필요
             if (totalIssued > coupon.getStock()) {
                 log.warn("[재고 초과] userId: {}, couponId: {}, issued: {}", userId, couponId, totalIssued);
