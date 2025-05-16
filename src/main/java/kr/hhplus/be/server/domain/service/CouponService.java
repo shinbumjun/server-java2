@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.domain.service;
 
 import kr.hhplus.be.server.application.coupon.CouponResult;
+import kr.hhplus.be.server.domain.coupon.Coupon;
 import kr.hhplus.be.server.domain.coupon.UserCoupon;
 
 import java.util.List;
@@ -17,4 +18,6 @@ public interface CouponService {
 
     // 쿠폰 복구
     void revertCouponIfUsed(Long userCouponId);
+
+    Coupon findCouponOrThrow(Long couponId);
 }

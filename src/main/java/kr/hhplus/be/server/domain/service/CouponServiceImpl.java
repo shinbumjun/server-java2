@@ -102,6 +102,12 @@ public class CouponServiceImpl implements CouponService {
         }
     }
 
+    @Override
+    public Coupon findCouponOrThrow(Long couponId) {
+        return couponRepository.findById(couponId)
+                .orElseThrow(() -> new IllegalStateException("쿠폰을 찾을 수 없습니다."));
+    }
+
 //    @Override
 //    public void cancelCouponUsage(Long userCouponId) {
 //        UserCoupon userCoupon = userCouponRepository.findById(userCouponId)
