@@ -1,5 +1,7 @@
 package kr.hhplus.be.server.application.point;
 
+import kr.hhplus.be.server.application.event.PaymentEventPublisher;
+import kr.hhplus.be.server.application.event.PointPaymentCompletedEvent;
 import kr.hhplus.be.server.domain.order.OrderProduct;
 import kr.hhplus.be.server.domain.service.CouponService;
 import kr.hhplus.be.server.domain.service.OrderService;
@@ -35,6 +37,8 @@ public class PointFacadeImpl implements PointFacade {
 
     private final RedisRankingService redisRankingService;
 
+    private final PaymentEventPublisher paymentEventPublisher;
+
     @Override
     public PointResult chargePoints(PointCriteria criteria) { // 사용자 ID, 충전금액
         // 포인트 충전 로직 처리: 도메인 서비스 호출
@@ -68,12 +72,17 @@ public class PointFacadeImpl implements PointFacade {
             pointService.usePoints(userId, amount);  // 포인트 차감 및 내역 저장 (재사용 가능)
             orderService.updateOrderStatusToPaid(orderId);  // 주문 상태를 PAID로 변경
 
-            // Redis ZSet에 오늘 랭킹 집계 누적, 캐시 vs DB(작고 짧은 쿼리)
+           // Redis ZSet에 오늘 랭킹 집계 누적, 캐시 vs DB(작고 짧은 쿼리)
             List<OrderProduct> products = orderService.getOrderProductsByOrderId(orderId);
             for (OrderProduct op : products) {
                 log.info("[주문ID {}] 상품ID={} 수량={} → Redis ZSet 집계 시작", orderId, op.getProductId(), op.getQuantity());
                 redisRankingService.incrementDailyProductRanking(op.getProductId(), op.getQuantity());
             }
+
+            // 트랜잭션이 완료되면 (주문-결제 성공) → 이벤트 발행
+            // 이벤트 발행 (AFTER_COMMIT에서 실행됨 → 외부 전송 비동기 처리)
+            // 문제 : 파사드에 트랜잭션을 감싼게 아니라서 트랜잭션이 풀리면 이 코드는 무쓸모가 될 수 있다
+            paymentEventPublisher.publish(new PointPaymentCompletedEvent(orderId, userId));
 
         } finally {
             redisLockManager.unlock(lockKey);
