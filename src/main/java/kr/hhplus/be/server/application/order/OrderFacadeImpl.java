@@ -51,12 +51,14 @@ public class OrderFacadeImpl implements OrderFacade {
         4. 실패 시 주문 상태 FAIL 처리 후 락 해제
      */
     public OrderResponse createOrder(OrderRequest request) {
-        // 1. 주문 먼저 생성
-        Long orderId = orderService.createOrder(request);
-
-        List<OrderRequest.OrderItem> items = request.getOrderItems(); // 주문 항목(상품 ID, 수량)
+        List<OrderItemCommand> items = request.getOrderItems().stream()
+                .map(OrderItemCommand::from)
+                .toList(); // 주문 항목(상품 ID, 수량)
         Long userId = request.getUserId(); // 사용자 ID
         Long couponId = request.getUserCouponId(); // 쿠폰 ID
+
+        // 1. 주문 먼저 생성
+        Long orderId = orderService.createOrder(userId, couponId, items);
 
         List<String> lockKeys = stockLockService.lockProductItems(items); // 1. 락만 잡음
 

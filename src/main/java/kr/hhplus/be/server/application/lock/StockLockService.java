@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.application.lock;
 
+import kr.hhplus.be.server.application.order.OrderItemCommand;
 import kr.hhplus.be.server.domain.service.ProductService;
 import kr.hhplus.be.server.infra.redis.RedisLockManager;
 import kr.hhplus.be.server.interfaces.order.OrderRequest;
@@ -22,9 +23,9 @@ public class StockLockService { //  락만 잡고 해제만 담당
      * @return 획득한 락 키 목록 (나중에 해제용)
      */
     // Redis 락 획득 : 상품별 락 획득 및 재고 차감
-    public List<String> lockProductItems(List<OrderRequest.OrderItem> items) {
+    public List<String> lockProductItems(List<OrderItemCommand> items) {
         List<String> lockKeys = items.stream()
-                .map(i -> "lock:product:" + i.getProductId())
+                .map(i -> "lock:product:" + i.productId()) // OrderItemCommand는 record 이므로 getter 대신 필드명 호출
                 .toList();
 
         for (String key : lockKeys) {

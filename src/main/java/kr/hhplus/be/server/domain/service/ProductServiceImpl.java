@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.domain.service;
 
+import kr.hhplus.be.server.application.order.OrderItemCommand;
 import kr.hhplus.be.server.domain.order.OrderProduct;
 import kr.hhplus.be.server.domain.product.Product;
 import kr.hhplus.be.server.domain.repository.OrderProductRepository;
@@ -34,9 +35,9 @@ public class ProductServiceImpl implements ProductService { // 1
 
     @Override
     // @Transactional // ← 여기에 AOP 프록시가 붙음, 재고차감
-    public void reduceStockWithTx(List<OrderRequest.OrderItem> items) {
-        for (OrderRequest.OrderItem item : items) {
-            checkAndReduceStock(item.getProductId(), item.getQuantity()); // 유틸처럼 사용
+    public void reduceStockWithTx(List<OrderItemCommand> items) {
+        for (OrderItemCommand item : items) {
+            checkAndReduceStock(item.productId(), item.quantity()); // record의 필드 접근
         }
     }
 

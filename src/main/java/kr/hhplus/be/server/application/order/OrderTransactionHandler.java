@@ -28,7 +28,7 @@ public class OrderTransactionHandler {
      * @param couponId 적용할 사용자 쿠폰 ID
      */
     @Transactional
-    public void processOrder(Long orderId, List<OrderRequest.OrderItem> items, Long userId, Long couponId) {
+    public void processOrder(Long orderId, List<OrderItemCommand> items, Long userId, Long couponId) {
         // 1. 재고 차감
         productService.reduceStockWithTx(items);
 
@@ -38,5 +38,7 @@ public class OrderTransactionHandler {
         }
 
         // 주문 상태(PAID)는 결제 단계에서 별도로 처리됨
+        // 진짜 성공한 경우에만 주문 항목 저장
+        orderService.saveOrderItems(orderId, items);
     }
 }
