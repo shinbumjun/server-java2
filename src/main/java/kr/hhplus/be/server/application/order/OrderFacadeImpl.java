@@ -53,6 +53,10 @@ public class OrderFacadeImpl implements OrderFacade {
             // 3. 쿠폰 적용
             if (orderRequest.getUserCouponId() != null) {
                 couponService.applyCoupon(orderRequest.getUserId(), orderRequest.getUserCouponId());
+
+                // [피드백1] 주문 정상 처리 상태는 언제 적용되냐?
+                // -> 주문 상태는 결제(PAID) 시점에 변경된다
+                // orderService.updateOrderStatusToPaid(orderId);
             }
         } catch (Exception e) {
             orderService.updateOrderStatusToFail(orderId); // 실패 시 상태 FAIL
