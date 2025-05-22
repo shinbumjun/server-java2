@@ -70,7 +70,7 @@ public class OrderFacadeImpl implements OrderFacade {
             // 1. 주문 상태를 FAIL로 변경
             orderService.updateOrderStatusToFail(orderId);
             // 2. 재고 복구
-            productService.revertStockByOrder(orderId);
+            productService.revertStockByOrder(orderId); // 실패했으므로 order_product 저장 안 됨 → items로 복구직접 재고 복구 -> 실패하면 재고 전부 복구
             // 3. 쿠폰 복구 (사용된 경우에만)
             if (couponId != null) {
                 couponService.revertCouponIfUsed(couponId);

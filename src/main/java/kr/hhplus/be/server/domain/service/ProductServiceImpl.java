@@ -83,6 +83,17 @@ public class ProductServiceImpl implements ProductService { // 1
         }
     }
 
+    @Override
+    public void revertStockByOrder(List<OrderItemCommand> items) {
+        for (OrderItemCommand item : items) {
+            Product product = productRepository.findById(item.productId())
+                    .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+            product.increaseStock(item.quantity());
+            productRepository.save(product);
+            log.info("✅ 재고 복구 - productId: {}, 복구 수량: {}, 복구 후 재고: {}", product.getId(), item.quantity(), product.getStock());
+        }
+    }
+
 
     @Override
     public List<ProductBestDto> getTop5BestSellingProducts() { // 판매량 상위 5개 상품 조회

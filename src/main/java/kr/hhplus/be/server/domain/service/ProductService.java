@@ -14,6 +14,8 @@ public interface ProductService {
 
     void revertStockByOrder(Long id); // 재고 복구
 
+    void revertStockByOrder(List<OrderItemCommand> items); // 직접 재고 복구
+
     List<ProductBestDto> getTop5BestSellingProducts(); // 판매량 상위 5개 상품 조회
 
     void reduceStockWithTx(List<OrderItemCommand> orderItems); // 주문된 상품의 재고 확인 및 차감 (일괄 처리)
