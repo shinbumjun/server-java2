@@ -1,21 +1,16 @@
 package kr.hhplus.be.server.application.point;
 
-import kr.hhplus.be.server.application.order.OrderHandler;
-import kr.hhplus.be.server.common.exception.PointErrorCode;
-import kr.hhplus.be.server.domain.order.Order;
 import kr.hhplus.be.server.domain.order.OrderProduct;
 import kr.hhplus.be.server.domain.service.CouponService;
 import kr.hhplus.be.server.domain.service.OrderService;
 import kr.hhplus.be.server.domain.service.PointService;
 import kr.hhplus.be.server.domain.service.ProductService;
-import kr.hhplus.be.server.common.exception.CustomBusinessException;
 import kr.hhplus.be.server.infra.lock.FairLockManager;
 import kr.hhplus.be.server.infra.redis.RedisLockManager;
 import kr.hhplus.be.server.infra.redis.RedisRankingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 

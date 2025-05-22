@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -28,12 +27,15 @@ public class OrderFacadeImpl implements OrderFacade {
     private final ProductService productService;     // 상품 재고 관련 서비스
     private final CouponService couponService;       // 쿠폰 검증 및 적용 서비스
 
-    private final OrderHandler orderHandler;         // 트랜잭션 단위로 주문 처리 묶음
+    private final OrderTransactionHandler orderHandler;         // 트랜잭션 단위로 주문 처리 묶음
 
     private final RedisLockManager redisLockManager; // Redis 기반 분산 락 관리자
     private final FairLockManager fairLockManager;   // 사용자 순서 보장용 Fair Lock 큐 관리자
 
     private final StockLockService stockLockService;
+
+    private final OrderTransactionHandler orderTransactionHandler;
+
     /*
         [피드백] 재고 감소 – 락을 너무 오래 잡고 있어요
         1. 주문 먼저 생성
@@ -41,95 +43,45 @@ public class OrderFacadeImpl implements OrderFacade {
         3. 실패 시 주문 상태만 FAIL
         4. 락을 짧게 사용하고 다른 유저도 병렬로 시도 가능
         5. 공정 큐와 전체 락 선점 방식은 제거
+
+        [피드백2] 쿠폰 적용 중 실패 시 재고도 롤백되어야 하지 않나?
+        1. 주문 먼저 생성
+        2. 상품별 Redis 락만 획득 (재고는 경쟁 자원이므로)
+        3. 재고 차감 + 쿠폰 적용을 하나의 트랜잭션으로 처리 (실패 시 모두 롤백)
+        4. 실패 시 주문 상태 FAIL 처리 후 락 해제
      */
-    public OrderResponse createOrder(OrderRequest orderRequest) {
+    public OrderResponse createOrder(OrderRequest request) {
         // 1. 주문 먼저 생성
-        Long orderId = orderService.createOrder(orderRequest);
+        Long orderId = orderService.createOrder(request);
+
+        List<OrderRequest.OrderItem> items = request.getOrderItems(); // 주문 항목(상품 ID, 수량)
+        Long userId = request.getUserId(); // 사용자 ID
+        Long couponId = request.getUserCouponId(); // 쿠폰 ID
+
+        List<String> lockKeys = stockLockService.lockProductItems(items); // 1. 락만 잡음
 
         try {
-            // 2. 상품별 락 획득 및 재고 차감
-            stockLockService.lockAndReduceStock(orderRequest.getOrderItems());
+            // 2. 트랜잭션으로 재고 차감 + 쿠폰 적용
+            orderTransactionHandler.processOrder(orderId, items, userId, couponId);
 
-            // 3. 쿠폰 적용
-            if (orderRequest.getUserCouponId() != null) {
-                couponService.applyCoupon(orderRequest.getUserId(), orderRequest.getUserCouponId());
-
-                // [피드백1] 주문 정상 처리 상태는 언제 적용되냐?
-                // -> 주문 상태는 결제(PAID) 시점에 변경된다
-                // orderService.updateOrderStatusToPaid(orderId);
-            }
         } catch (Exception e) {
-            orderService.updateOrderStatusToFail(orderId); // 실패 시 상태 FAIL
-            throw new IllegalStateException("재고 차감 실패: 주문 상태 FAIL 처리됨");
+            // 1. 주문 상태를 FAIL로 변경
+            orderService.updateOrderStatusToFail(orderId);
+            // 2. 재고 복구
+            productService.revertStockByOrder(orderId);
+            // 3. 쿠폰 복구 (사용된 경우에만)
+            if (couponId != null) {
+                couponService.revertCouponIfUsed(couponId);
+            }
+
+            throw new IllegalStateException("주문 처리 실패: 주문 상태 FAIL 및 자원 복구 처리됨", e);
+        } finally {
+            // 3. 락 해제
+            stockLockService.unlockProductItems(lockKeys);
         }
 
         return new OrderResponse(201, "주문이 정상적으로 처리되었습니다.", new OrderResponse.OrderData(orderId));
     }
-
-
-//    @Override
-//    public OrderResponse createOrder(OrderRequest orderRequest) {
-//
-//        log.info("[{}] 주문 시작", orderRequest.getUserId());
-//
-//        orderRequest.getOrderItems().stream()
-//                .collect(Collectors.groupingBy(OrderRequest.OrderItem::getProductId))
-//                .forEach((id, list) -> {
-//                    int totalQty = list.stream()
-//                            .mapToInt(OrderRequest.OrderItem::getQuantity)
-//                            .sum();
-//                    System.out.println("[사용자 " + orderRequest.getUserId() + "] 상품 ID: " + id + ", 요청 총 수량: " + totalQty);
-//                });
-//
-//        // 상품 단위로 Redis 락 키 생성 (예: lock:product:1)
-//        List<String> lockKeys = orderRequest.getOrderItems().stream()
-//                .map(item -> "lock:product:" + item.getProductId())
-//                .toList();
-//
-//        // (1) 공정 락 큐 진입
-//        fairLockManager.waitMyTurn(orderRequest.getUserId(), 20000L); // 20초 대기
-//
-//        log.info("[{}] 락 시도 - {}", orderRequest.getUserId(), lockKeys);
-//
-//        // 1. 모든 상품에 대해 락 획득 시도 (하나라도 실패하면 전체 실패)
-//        for (String key : lockKeys) {
-//            if (!redisLockManager.lockWithRetry(key, 20000)) { // 재시도 가능한 최대 대기 시간 10초
-//
-//                log.warn("[{}] 락 획득 실패 - {}", orderRequest.getUserId(), key);
-//
-//                // 지금까지 잡은 락 모두 해제 후 실패 처리
-//                lockKeys.forEach(redisLockManager::unlock);
-//
-//                // (2) 락 획득 실패 시 큐에서 제거
-//                fairLockManager.releaseTurn(orderRequest.getUserId()); // 락 실패 시도 후 제거
-//
-//                throw new IllegalStateException("상품 재고에 대한 락 획득 실패: " + key);
-//            }
-//        }
-//
-//        log.info("[{}] 락 획득 성공 - {}", orderRequest.getUserId(), lockKeys);
-//
-//        try {
-//
-//            log.info("[{}] 트랜잭션 실행 시작", orderRequest.getUserId());
-//
-//            // 2. 락을 전부 획득한 경우에만 트랜잭션 실행 (재고 차감, 쿠폰 적용, 주문 생성)
-//            return orderHandler.createOrderWithTx(orderRequest);
-//        } finally {
-//            // 3. 트랜잭션 성공/실패와 관계없이 락은 반드시 해제 (역순 해제 권장)
-//            for (int i = lockKeys.size() - 1; i >= 0; i--) {
-//                redisLockManager.unlock(lockKeys.get(i));
-//            }
-//
-//            // (3) 트랜잭션 종료 후 무조건 큐에서 제거
-//            fairLockManager.releaseTurn(orderRequest.getUserId()); // 성공/실패 상관없이 큐에서 제거
-//
-//            log.info("[{}] 락 해제 완료 - {}", orderRequest.getUserId(), lockKeys);
-//
-//        }
-//    }
-
-
 
 
     // 5분 내 미결제 주문을 취소하고, 쿠폰 및 재고를 복구
