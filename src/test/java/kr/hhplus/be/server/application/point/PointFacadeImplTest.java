@@ -1,5 +1,7 @@
 package kr.hhplus.be.server.application.point;
 
+import kr.hhplus.be.server.application.event.PaymentEventPublisher;
+import kr.hhplus.be.server.application.event.PointPaymentCompletedEvent;
 import kr.hhplus.be.server.domain.order.Order;
 import kr.hhplus.be.server.domain.point.Point;
 import kr.hhplus.be.server.domain.repository.OrderRepository;
@@ -10,11 +12,16 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 
 import static java.time.LocalDateTime.now;
 import static org.junit.jupiter.api.Assertions.*;
+
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
+import static org.mockito.ArgumentMatchers.any;
 
 @SpringBootTest
 @Transactional
@@ -31,6 +38,9 @@ class PointFacadeImplTest {
 
     @Autowired
     private PointRepository pointRepository;
+
+    @SpyBean // 실제 로직 수행, verify() 가능
+    private PaymentEventPublisher paymentEventPublisher;
 
     @Test
     @DisplayName("성공: 포인트 결제 성공 시 주문 상태가 PAID로 변경된다")
@@ -83,4 +93,21 @@ class PointFacadeImplTest {
         assertEquals("주문 상태가 EXPIRED(결제 불가 건)입니다.", result.getDetail());
     }
 
+    @Test
+    @DisplayName("성공: 포인트 결제 후 이벤트가 발행된다")
+    void processPointPayment_eventPublished() {
+        // given
+        pointRepository.save(new Point(null, 1L, 50000, now(), now())); // 해당 사용자 포인트 정보
+        Order order = orderRepository.save(new Order(1L, null, false, 20000, "NOT_PAID", now(), now()));
+
+        // when
+        pointFacade.processPointPayment(order.getId());
+
+        // then
+        verify(paymentEventPublisher, times(1))
+                .publish(any(PointPaymentCompletedEvent.class));
+        // 로그 확인
+        // [MOCK] 외부 데이터 플랫폼에 주문 1 전송 완료
+        // [성공] 주문 1 외부 플랫폼 전송 완료
+    }
 }
