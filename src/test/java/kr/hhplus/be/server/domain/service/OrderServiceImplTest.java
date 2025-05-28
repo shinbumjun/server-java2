@@ -204,7 +204,7 @@ class OrderServiceImplTest {
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 
         // when
-        orderService.updateOrderStatusToPaid(1L);
+        orderService.updateOrderStatusToPaid(order);
 
         // then
         assertEquals("PAID", order.getStatus());
@@ -223,7 +223,7 @@ class OrderServiceImplTest {
 
         // expect
         assertThrows(IllegalStateException.class, () -> {
-            orderService.updateOrderStatusToPaid(1L);
+            orderService.updateOrderStatusToPaid(order);
         });
     }
 

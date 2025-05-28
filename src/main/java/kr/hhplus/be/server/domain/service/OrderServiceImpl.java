@@ -102,8 +102,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override // 주문 상태 변경: 결제 성공시 상태를 PAID로 업데이트
-    public void updateOrderStatusToPaid(Long orderId) {
-        Order order = getOrderById(orderId); // 주문 가져오기
+    public void updateOrderStatusToPaid(Order order) {
         order.updateStatusToPaid(); // 도메인에서 상태 변경 (EXPIRED일 경우 내부에서 막게 할 수 있음)
         orderRepository.save(order); // 변경 사항 저장
     }
