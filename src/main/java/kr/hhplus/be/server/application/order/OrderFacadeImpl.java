@@ -84,7 +84,7 @@ public class OrderFacadeImpl implements OrderFacade {
         List<String> lockKeys = stockLockService.lockProductItems(items);
 
         try {
-            // 5) 트랜잭션 시작: 재고 차감 + 쿠폰 적용 + 주문 상태 변경
+            // 5) 트랜잭션 시작: 재고 차감 + 쿠폰 적용
             orderTransactionHandler.processOrder(order, items, userCoupon);
 
         } catch (Exception e) {
