@@ -4,6 +4,7 @@ import kr.hhplus.be.server.application.order.OrderItemCommand;
 import kr.hhplus.be.server.domain.coupon.UserCoupon;
 import kr.hhplus.be.server.domain.order.Order;
 import kr.hhplus.be.server.domain.order.OrderProduct;
+import kr.hhplus.be.server.domain.point.User;
 import kr.hhplus.be.server.domain.product.Product;
 import kr.hhplus.be.server.domain.repository.OrderProductRepository;
 import kr.hhplus.be.server.domain.repository.OrderRepository;
@@ -32,31 +33,31 @@ public class OrderServiceImpl implements OrderService {
 
 
     @Override // orderRequest에서 사용자 ID, 주문 항목(상품ID, 수량), 쿠폰 ID를 추출하여 주문을 생성
-    public Long createOrder(Long userId, Long couponId, List<OrderItemCommand> items) {
+    public Order createOrder(User user, UserCoupon userCoupon, List<OrderItemCommand> items) {
         // 1. 주문 총액 계산
         int totalAmount = calculateTotalAmount(items);  // 주문 총액 계산
 
         // 2. 주문 생성
         Order order = new Order(
-                userId,
-                couponId,
+                user.getId(),
+                userCoupon != null ? userCoupon.getCouponId() : null, // 있으면 넣기
                 false,  // 쿠폰 사용 여부 (여기선 가정, 실제로 쿠폰 적용 후 설정)
                 totalAmount,  // 주문 총액 계산된 값
                 "NOT_PAID",  // 주문 상태
                 null, null  // 생성 시간은 자동으로 설정될 것
         );
 
-        // 3. 주문 내 상품 재고 체크 및 차감
+        // 3. 주문 내 상품 재고 체크
         order.validateOrder(items, productRepository); // 재고 및 상품 존재 여부 확인
 
         // 4. 주문 저장 (ID는 자동으로 생성됨)
         orderRepository.save(order);  // DB에 주문 저장
 
         // 5. 주문 항목 저장
-        // saveOrderItems(order, items); // 주문 항목 저장
+        saveOrderItems(order.getId(), items); // 주문 항목 저장
 
         // 6. 주문 ID 반환
-        return order.getId();  // 생성된 주문 ID 반환
+        return order;  // 생성된 주문 ID 반환
     }
 
     // 5분 이상 결제 안 된 주문 조회
@@ -81,6 +82,7 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다. orderId=" + orderId));
     }
 
+    @Transactional // 실패처리에도 트랜잭션을 걸어야함
     @Override
     public void updateOrderStatusToFail(Long orderId) { // 실패 시 상태 FAIL
         Order order = getOrderById(orderId);
