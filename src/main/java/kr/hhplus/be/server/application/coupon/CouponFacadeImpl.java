@@ -59,9 +59,14 @@ public class CouponFacadeImpl implements CouponFacade {
         1. Redis 락 획득 시도
         2. 성공 시 → 쿠폰 발급
         3. 실패 시 → 선착순 실패 처리
+
+        [카프카 도입]
+        1. 락을 전부 삭제
+        2. 발급 요청 이벤트만 발행
      */
     @Override // 선착순 쿠폰 발급
     public CouponResult issueCoupon(Long userId, Long couponId) { // 쿠폰을 발급받는 사용자 ID, 발급받을 쿠폰 ID
+
         // 락 키: 쿠폰 발급 동시성 제어용
         String lockKey = "lock:coupon:" + couponId; // 동일한 쿠폰(같은 couponId)에 대해서는 하나만 락을 가질 수 있음 → 동시성 제어
 
