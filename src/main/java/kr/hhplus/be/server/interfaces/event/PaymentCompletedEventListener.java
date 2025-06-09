@@ -21,8 +21,8 @@ public class PaymentCompletedEventListener {
     }
 
     @Async // 비동기 처리
-    // @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // "현재 트랜잭션이 커밋된 이후에 실행된다
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 현재 트랜잭션이 커밋된 이후에 실행된다
+    // @EventListener
     public void handle(PointPaymentCompletedEvent event) {
         try {
             dataPlatformSendService.sendOrderData(event.getOrderId());

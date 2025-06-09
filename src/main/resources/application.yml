@@ -36,3 +36,20 @@ spring:
     url: jdbc:mysql://localhost:3306/hhplus?characterEncoding=UTF-8&serverTimezone=UTC
     username: application
     password: application
+
+  kafka: # 카프카 설정
+    bootstrap-servers: localhost:9094    # docker-compose에서 EXTERNAL 9094로 매핑
+    producer:
+      key-serializer:   org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: coupon-issuers
+      key-deserializer:   org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    listener:
+      concurrency: 3       # 토픽 파티션 수에 맞춰 조정
+      ack-mode: manual     # 수동 커밋
+    properties:
+      auto.offset.reset: earliest
+      enable.auto.commit: false
+      auto.create.topics.enable: true   # (선택) 개발 중 편의를 위해 토픽 자동 생성 허용

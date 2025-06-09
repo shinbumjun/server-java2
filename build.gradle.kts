@@ -57,6 +57,11 @@ dependencies {
 	// Lombok for test (test에서도 Slf4j 등 어노테이션을 사용 가능하게 함)
 	testCompileOnly("org.projectlombok:lombok")
 	testAnnotationProcessor("org.projectlombok:lombok")
+
+	// Kafka
+	implementation("org.springframework.kafka:spring-kafka")
+	// Kafka test
+	testImplementation("org.testcontainers:kafka:1.18.3")
 }
 
 tasks.withType<Test> {

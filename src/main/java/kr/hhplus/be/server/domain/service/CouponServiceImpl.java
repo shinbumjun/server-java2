@@ -4,6 +4,7 @@ package kr.hhplus.be.server.domain.service;
 import kr.hhplus.be.server.application.coupon.CouponResult;
 import kr.hhplus.be.server.domain.coupon.Coupon;
 import kr.hhplus.be.server.domain.coupon.UserCoupon;
+import kr.hhplus.be.server.domain.order.Order;
 import kr.hhplus.be.server.domain.repository.CouponRepository;
 import kr.hhplus.be.server.domain.repository.UserCouponRepository;
 import kr.hhplus.be.server.interfaces.coupon.CouponResponse;
@@ -62,9 +63,9 @@ public class CouponServiceImpl implements CouponService {
     }
 
     @Override // 쿠폰 검증 및 적용
-    public void applyCoupon(Long userId, Long userCouponId) {
+    public void applyCoupon(UserCoupon Coupon, Order order) {
         // 1. 사용자 쿠폰 조회
-        UserCoupon userCoupon = userCouponRepository.findById(userCouponId)
+        UserCoupon userCoupon = userCouponRepository.findById(Coupon.getCouponId())
                 .orElseThrow(() -> new IllegalStateException("쿠폰을 찾을 수 없습니다."));
 
         // 2. 쿠폰이 유효한지 검증
@@ -79,7 +80,7 @@ public class CouponServiceImpl implements CouponService {
 
         // 5. 쿠폰을 적용하여 주문에 반영 -> 할인 적용은 쿠폰 검증에서 이루어지지 않는다
         // 예: 할인을 적용하는 로직 (쿠폰의 할인 금액을 주문에 반영)
-        // applyDiscountToOrder() 메서드 등을 호출하여 할인 적용
+        // applyDiscountToOrder(order) 메서드 등을 호출하여 할인 적용
 
         // 6. 쿠폰 사용 처리 (쿠폰을 사용했다고 표시)
         userCoupon.setIsUsed(true); // 쿠폰 사용 처리

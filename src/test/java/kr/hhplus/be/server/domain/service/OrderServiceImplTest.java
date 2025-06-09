@@ -2,6 +2,8 @@ package kr.hhplus.be.server.domain.service;
 
 import kr.hhplus.be.server.application.order.OrderItemCommand;
 import kr.hhplus.be.server.application.order.OrderTransactionHandler;
+import kr.hhplus.be.server.domain.coupon.UserCoupon;
+import kr.hhplus.be.server.domain.point.User;
 import kr.hhplus.be.server.domain.repository.OrderProductRepository;
 import kr.hhplus.be.server.domain.repository.OrderRepository;
 import kr.hhplus.be.server.interfaces.order.OrderRequest;
@@ -16,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -49,17 +52,39 @@ class OrderServiceImplTest {
 
     private OrderRequest orderRequest;
 
-    private Long userId;
-    private Long couponId;
+    private User user;
+    private UserCoupon userCoupon;
+    private Order order;
     private List<OrderItemCommand> items;
     @BeforeEach
     void setUp() {
         // 사용자 ID와 쿠폰 ID
-        userId = 1L;
-        couponId = 1L;
+        // 1) User 객체 세팅
+        user = new User();
+        user.setId(1L);
 
-        // 상품 ID 1, 수량 2인 주문 항목 생성
+        // 2) UserCoupon 객체 세팅
+        userCoupon = new UserCoupon();
+        userCoupon.setId(1L);
+        userCoupon.setUserId(user.getId());
+        userCoupon.setCouponId(1L);
+        userCoupon.setIsUsed(false);
+
+        // 3) 주문 항목 세팅
         items = List.of(new OrderItemCommand(1L, 2));
+
+        // 4) Order 객체 세팅
+        order = new Order(
+                user.getId(),
+                userCoupon != null ? userCoupon.getCouponId() : null,
+                false,                            // 쿠폰 사용 여부
+                10000,                            // 테스트용 총액
+                "NOT_PAID",                       // 초기 상태
+                LocalDateTime.now(),              // createdAt
+                LocalDateTime.now()               // updatedAt
+        );
+        order.setId(1L);                      // Mockito가 save 후 ID를 붙인다고 가정
+
     }
 
     @Test
@@ -84,11 +109,11 @@ class OrderServiceImplTest {
         });
 
         // When: 주문 생성 호출
-        Long orderId = orderService.createOrder(userId, couponId, items);
+        Order orderResult = orderService.createOrder(user, userCoupon, items);
 
         // Then: 주문 ID가 반환되어야 함
-        assertNotNull(orderId);
-        assertEquals(1L, orderId);  // 반환된 주문 ID가 1L이어야 함
+        assertNotNull(orderResult.getId());
+        assertEquals(1L, orderResult.getId());  // 반환된 주문 ID가 1L이어야 함
         verify(orderRepository, times(1)).save(any(Order.class));  // save 메서드가 한 번 호출되었는지 확인
     }
 
@@ -109,7 +134,7 @@ class OrderServiceImplTest {
 
         // When & Then: 예외 발생 여부 확인
         IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {
-            orderTransactionHandler.processOrder(1L, items, 1L, null); // 쿠폰 없음
+            orderTransactionHandler.processOrder(order, items, null); // 쿠폰 없음
         });
 
         assertEquals("상품의 재고가 부족합니다.", exception.getMessage());
@@ -179,7 +204,7 @@ class OrderServiceImplTest {
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 
         // when
-        orderService.updateOrderStatusToPaid(1L);
+        orderService.updateOrderStatusToPaid(order);
 
         // then
         assertEquals("PAID", order.getStatus());
@@ -198,7 +223,7 @@ class OrderServiceImplTest {
 
         // expect
         assertThrows(IllegalStateException.class, () -> {
-            orderService.updateOrderStatusToPaid(1L);
+            orderService.updateOrderStatusToPaid(order);
         });
     }
 
