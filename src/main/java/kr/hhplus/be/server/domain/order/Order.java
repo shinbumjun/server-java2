@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.domain.order;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.application.order.OrderItemCommand;
 import kr.hhplus.be.server.interfaces.order.OrderRequest;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,14 +41,11 @@ public class Order { // 주문
         this.updatedAt = updatedAt;
     }
 
-    public void validateOrder(List<OrderRequest.OrderItem> orderItems, ProductRepository productRepository) {
+    public void validateOrder(List<OrderItemCommand> items, ProductRepository productRepository) {
         // 재고 부족 체크
-        for (OrderRequest.OrderItem item : orderItems) {
-            Product product = productRepository.findById(item.getProductId())
+        for (OrderItemCommand item : items) {
+            Product product = productRepository.findById(item.productId())
                     .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
-//            if (item.getQuantity() > product.getStock()) {
-//                throw new IllegalArgumentException("상품의 재고가 부족합니다.");
-//            }
         }
     }
 
@@ -67,5 +65,9 @@ public class Order { // 주문
             throw new IllegalStateException("EXPIRED 상태의 주문은 결제 완료로 변경할 수 없습니다.");
         }
         this.status = "PAID";
+    }
+
+    public void updateStatusToFail() {
+        this.status = "FAIL"; // 주문 취소
     }
 }

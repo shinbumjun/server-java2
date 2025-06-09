@@ -45,7 +45,8 @@ public class CouponRedisLockIntegrationTest {
     @BeforeEach
     void setupAndClearRedis() {
         // Redis: 큐 및 락 키 초기화
-        redisTemplate.delete("fair:order:queue");
+        // redisTemplate.delete("fair:order:queue");
+
         Set<String> keys = redisTemplate.keys("lock:*");
         if (keys != null && !keys.isEmpty()) {
             redisTemplate.delete(keys);

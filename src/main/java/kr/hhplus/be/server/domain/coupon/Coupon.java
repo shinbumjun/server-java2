@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
@@ -11,6 +12,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+@Slf4j
 @Entity
 @Getter
 @Setter
@@ -80,6 +82,7 @@ public class Coupon {
             throw new IllegalStateException("재고가 부족합니다.");
         }
         this.stock -= 1;  // 재고 차감
+        log.info("[재고 차감] couponId={}, 남은 재고={}", this.id, this.stock);
     }
 }
 

@@ -39,7 +39,7 @@ public class OrderRedisLockIntegrationTest {
     @BeforeEach
     void clearRedisState() {
         // 큐 초기화
-        redisTemplate.delete("fair:order:queue");
+        // redisTemplate.delete("fair:order:queue");
 
         // 필요시 락 키도 초기화
         Set<String> keys = redisTemplate.keys("lock:*");
