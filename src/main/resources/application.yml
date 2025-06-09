@@ -14,12 +14,19 @@ spring:
   jpa:
     open-in-view: false
     generate-ddl: false
-    show-sql: false
+    show-sql: true # false
     hibernate:
-      ddl-auto: none
+      ddl-auto: update # none
     properties:
       hibernate.timezone.default_storage: NORMALIZE_UTC
       hibernate.jdbc.time_zone: UTC
+  sql:
+    init:
+      mode: always  # 항상 data.sql 실행
+  logging:
+    level:
+      root: DEBUG # 디버깅 로깅 활성화
+      org.springframework: DEBUG # Spring의 디버깅 로그를 출력
 
 ---
 spring.config.activate.on-profile: local, test
@@ -29,3 +36,20 @@ spring:
     url: jdbc:mysql://localhost:3306/hhplus?characterEncoding=UTF-8&serverTimezone=UTC
     username: application
     password: application
+
+  kafka: # 카프카 설정
+    bootstrap-servers: localhost:9094    # docker-compose에서 EXTERNAL 9094로 매핑
+    producer:
+      key-serializer:   org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: coupon-issuers
+      key-deserializer:   org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    listener:
+      concurrency: 3       # 토픽 파티션 수에 맞춰 조정
+      ack-mode: manual     # 수동 커밋
+    properties:
+      auto.offset.reset: earliest
+      enable.auto.commit: false
+      auto.create.topics.enable: true   # (선택) 개발 중 편의를 위해 토픽 자동 생성 허용

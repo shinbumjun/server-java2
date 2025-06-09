@@ -11,6 +11,50 @@ services:
       - MYSQL_DATABASE=hhplus
     volumes:
       - ./data/mysql/:/var/lib/mysql
+  redis: # Redis 서버 설정 (추가)
+    image: redis:7.2
+    container_name: redis-local
+    ports:
+      - "6379:6379" # Redis 기본 포트
+    restart: always # 컨테이너 꺼지면 자동 재시작
+
+  # 카프카 설정
+  kafka:
+    image: public.ecr.aws/bitnami/kafka:3.5.1
+    ports:
+      - "9094:9094"
+    volumes:
+      - kafka-data:/bitnami/kafka
+    environment:
+      KAFKA_CFG_NODE_ID: 0
+      KAFKA_CFG_PROCESS_ROLES: controller,broker
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@127.0.0.1:9093
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: application
+      MONGO_INITDB_ROOT_PASSWORD: application
+      MONGO_INITDB_DATABASE: display
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+
+volumes:
+  mysql-5-7-data:
+  redis_data:
+  redis_config:
+  kafka-zookeeper-data:
+  kafka-data:
+  mongodb_data:
+  mongodb_config:
 
 networks:
   default:

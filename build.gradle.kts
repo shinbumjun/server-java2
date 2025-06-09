@@ -38,12 +38,30 @@ dependencies {
     // DB
 	runtimeOnly("com.mysql:mysql-connector-j")
 
-    // Test
+	// Lombok
+	compileOnly("org.projectlombok:lombok") // Lombok을 컴파일 타임에만 사용
+	annotationProcessor("org.projectlombok:lombok") // Lombok 어노테이션 처리
+
+	// Test
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.boot:spring-boot-testcontainers")
 	testImplementation("org.testcontainers:junit-jupiter")
 	testImplementation("org.testcontainers:mysql")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+	// redis
+	testImplementation("com.redis:testcontainers-redis")
+	// RedisTemplate, StringRedisTemplate, LettuceConnectionFactory 빈으로 등록
+	implementation("org.springframework.boot:spring-boot-starter-data-redis")
+
+	// Lombok for test (test에서도 Slf4j 등 어노테이션을 사용 가능하게 함)
+	testCompileOnly("org.projectlombok:lombok")
+	testAnnotationProcessor("org.projectlombok:lombok")
+
+	// Kafka
+	implementation("org.springframework.kafka:spring-kafka")
+	// Kafka test
+	testImplementation("org.testcontainers:kafka:1.18.3")
 }
 
 tasks.withType<Test> {
