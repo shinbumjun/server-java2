@@ -5,6 +5,7 @@ import kr.hhplus.be.server.application.point.PointResult;
 import kr.hhplus.be.server.domain.order.Order;
 import kr.hhplus.be.server.domain.point.Point;
 import kr.hhplus.be.server.domain.point.PointHistory;
+import kr.hhplus.be.server.domain.point.User;
 import kr.hhplus.be.server.domain.pointhistory.PointHistoryFactory;
 import kr.hhplus.be.server.domain.repository.OrderRepository;
 import kr.hhplus.be.server.domain.repository.PointHistoryRepository;
@@ -64,18 +65,20 @@ public class PointServiceImpl implements PointService {
     }
 
     @Override
-    @Transactional
-    public PointResult usePoints(Long userId, int amount) {
+    public PointResult usePoints(User user, int amount) {
 //        // 1. 주문 조회
 //        Order order = orderRepository.findById(orderId)
 //                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
 
-        Point point = Point.findByUserIdOrThrow(userId, pointRepository); // 포인트 조회
+        // 1. Point 엔티티 조회
+        Point point = Point.findByUserIdOrThrow(user.getId(), pointRepository);
 
-        point.deductAmount(amount);              // 잔액 검증 + 차감
-        pointRepository.save(point);             // 저장
+        // 2. 잔액 검증 + 차감 및 저장
+        point.deductAmount(amount);
+        pointRepository.save(point);
 
-        PointHistory history = PointHistoryFactory.createUsageHistory(point, amount); // 내역 생성 및 저장
+        // 3. 히스토리 기록
+        PointHistory history = PointHistoryFactory.createUsageHistory(point, amount);
         pointHistoryRepository.save(history);
 
         // 7. 주문 상태 변경 (결제 완료 처리) -> 포인트가 주문을 직접 수정하는 것 안되고 포인트핸들러가
@@ -83,6 +86,6 @@ public class PointServiceImpl implements PointService {
         // orderRepository.save(order);
 
         // 8. 결제 성공 시 응답 반환
-        return new PointResult(userId, point.getBalance(), true, "포인트 결제 완료");
+        return new PointResult(user.getId(), point.getBalance(), true, "포인트 결제 완료");
     }
 }

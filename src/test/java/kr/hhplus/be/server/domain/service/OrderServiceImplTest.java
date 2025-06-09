@@ -1,5 +1,9 @@
 package kr.hhplus.be.server.domain.service;
 
+import kr.hhplus.be.server.application.order.OrderItemCommand;
+import kr.hhplus.be.server.application.order.OrderTransactionHandler;
+import kr.hhplus.be.server.domain.coupon.UserCoupon;
+import kr.hhplus.be.server.domain.point.User;
 import kr.hhplus.be.server.domain.repository.OrderProductRepository;
 import kr.hhplus.be.server.domain.repository.OrderRepository;
 import kr.hhplus.be.server.interfaces.order.OrderRequest;
@@ -14,7 +18,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.Mockito.*;
@@ -32,15 +38,53 @@ class OrderServiceImplTest {
     @Mock
     private OrderProductRepository orderProductRepository;
 
+    @Mock
+    private ProductService productService;
+
+    @Mock
+    private CouponService couponService;
+
     @InjectMocks
     private OrderServiceImpl orderService;
 
+    @InjectMocks
+    private OrderTransactionHandler orderTransactionHandler;
+
     private OrderRequest orderRequest;
 
+    private User user;
+    private UserCoupon userCoupon;
+    private Order order;
+    private List<OrderItemCommand> items;
     @BeforeEach
     void setUp() {
-        // 주문 요청 초기화 (상품 ID, 수량)
-        orderRequest = new OrderRequest(1L, 1L, Arrays.asList(new OrderRequest.OrderItem(1L, 2)));
+        // 사용자 ID와 쿠폰 ID
+        // 1) User 객체 세팅
+        user = new User();
+        user.setId(1L);
+
+        // 2) UserCoupon 객체 세팅
+        userCoupon = new UserCoupon();
+        userCoupon.setId(1L);
+        userCoupon.setUserId(user.getId());
+        userCoupon.setCouponId(1L);
+        userCoupon.setIsUsed(false);
+
+        // 3) 주문 항목 세팅
+        items = List.of(new OrderItemCommand(1L, 2));
+
+        // 4) Order 객체 세팅
+        order = new Order(
+                user.getId(),
+                userCoupon != null ? userCoupon.getCouponId() : null,
+                false,                            // 쿠폰 사용 여부
+                10000,                            // 테스트용 총액
+                "NOT_PAID",                       // 초기 상태
+                LocalDateTime.now(),              // createdAt
+                LocalDateTime.now()               // updatedAt
+        );
+        order.setId(1L);                      // Mockito가 save 후 ID를 붙인다고 가정
+
     }
 
     @Test
@@ -65,11 +109,11 @@ class OrderServiceImplTest {
         });
 
         // When: 주문 생성 호출
-        Long orderId = orderService.createOrder(orderRequest);
+        Order orderResult = orderService.createOrder(user, userCoupon, items);
 
         // Then: 주문 ID가 반환되어야 함
-        assertNotNull(orderId);
-        assertEquals(1L, orderId);  // 반환된 주문 ID가 1L이어야 함
+        assertNotNull(orderResult.getId());
+        assertEquals(1L, orderResult.getId());  // 반환된 주문 ID가 1L이어야 함
         verify(orderRepository, times(1)).save(any(Order.class));  // save 메서드가 한 번 호출되었는지 확인
     }
 
@@ -78,23 +122,24 @@ class OrderServiceImplTest {
 
     // 주문 실패 케이스: 재고가 부족한 경우
     @Test
-    @DisplayName("주문 생성 실패 - 재고 부족")
+    @DisplayName("주문 생성 실패 - 재고 부족 (단위 테스트)")
     void createOrder_Failure_With_Stock() {
-        // Given: 상품의 재고가 부족한 경우
-        Product product = new Product(1L, "Macbook Pro", "Description", 2000000, 2, null, null);  // 재고 2
-        when(productRepository.findById(1L)).thenReturn(java.util.Optional.of(product));
+        // Given: 재고 부족 상황을 가정
+        doThrow(new IllegalStateException("상품의 재고가 부족합니다."))
+                .when(productService)
+                .reduceStockWithTx(any());
 
-        // 주문 요청 객체 생성 (주문 수량이 재고보다 많은 경우)
-        orderRequest = new OrderRequest(1L, 1L, Arrays.asList(new OrderRequest.OrderItem(1L, 3)));  // 재고 2, 주문 수량 3
+        // 주문 수량이 재고보다 많은 경우
+        items = List.of(new OrderItemCommand(1L, 3));
 
-        // When: 주문 생성 호출
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            orderService.createOrder(orderRequest);  // 주문 생성
+        // When & Then: 예외 발생 여부 확인
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {
+            orderTransactionHandler.processOrder(order, items, null); // 쿠폰 없음
         });
 
-        // Then: 예외가 발생해야 함 (재고 부족)
-        assertEquals("상품의 재고가 부족합니다.", exception.getMessage());  // 예외 메시지가 정확한지 확인
+        assertEquals("상품의 재고가 부족합니다.", exception.getMessage());
     }
+
 
     @Test
     @DisplayName("성공: 주문 상태를 EXPIRED로 변경한다")
@@ -159,7 +204,7 @@ class OrderServiceImplTest {
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 
         // when
-        orderService.updateOrderStatusToPaid(1L);
+        orderService.updateOrderStatusToPaid(order);
 
         // then
         assertEquals("PAID", order.getStatus());
@@ -178,7 +223,7 @@ class OrderServiceImplTest {
 
         // expect
         assertThrows(IllegalStateException.class, () -> {
-            orderService.updateOrderStatusToPaid(1L);
+            orderService.updateOrderStatusToPaid(order);
         });
     }
 

@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.domain.service;
 
+import kr.hhplus.be.server.application.order.OrderItemCommand;
 import kr.hhplus.be.server.domain.product.Product;
 import kr.hhplus.be.server.interfaces.order.OrderRequest;
 import kr.hhplus.be.server.interfaces.product.ProductBestDto;
@@ -13,9 +14,11 @@ public interface ProductService {
 
     void revertStockByOrder(Long id); // 재고 복구
 
+    void revertStockByOrder(List<OrderItemCommand> items); // 직접 재고 복구
+
     List<ProductBestDto> getTop5BestSellingProducts(); // 판매량 상위 5개 상품 조회
 
-    void reduceStockWithTx(List<OrderRequest.OrderItem> orderItems); // 주문된 상품의 재고 확인 및 차감 (일괄 처리)
+    void reduceStockWithTx(List<OrderItemCommand> orderItems); // 주문된 상품의 재고 확인 및 차감 (일괄 처리)
 
     List<Product> getProductsByIds(List<Long> productIds);
 }
